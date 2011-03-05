@@ -315,7 +315,7 @@ class SaveTab(QtGui.QWidget):
         self.codeEditButton.clicked.connect(self.edit_code)
 
         ### appliquer ###
-        self.applyW = QtGui.QPushButton("appliquer", self)
+        self.applyW = QtGui.QPushButton("appliquer")
         self.applyW.clicked.connect(self.apply_clicked)
 
         ### info ###
@@ -385,6 +385,7 @@ class SaveTab(QtGui.QWidget):
         ok, self.code = TextEditDialog(self, self.code).getReturn()
 
     def apply_clicked(self):
+        """ applique le tout """
         rep = str(self.dossier)
         if not os.path.isdir(rep):
             os.mkdir(rep)
@@ -392,6 +393,7 @@ class SaveTab(QtGui.QWidget):
         print images
         n = 0
         for i in images:
+            self.infoLabel.setText(i)
             n = n+1
             fn = self.return_new_filename(os.path.split(i)[1], str(self.filenameEdit.text()), n)
             fn = os.path.join(rep, fn)
@@ -402,6 +404,7 @@ class SaveTab(QtGui.QWidget):
             exec code
             ok = im.save(fn)
             print ok
+        self.infoLabel.setText("toutes les images ont été traitées ou pas")
         
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """

@@ -27,7 +27,7 @@ from plugsubclass import *
 
 ### plugin infos #######################################################
 NAME = "recadrage"
-MOD_NAME = "plugincrop"
+MOD_NAME = "plugin_crop"
 DESCRIPTION = "recadre les images"
 AUTHOR = "pops"
 VERSION = 0.1
