@@ -25,6 +25,7 @@ import sys, os
 
 from plugsubclass import *
 
+image = "home/pops/prog/img/IMGP0333.JPG"
 ### plugin infos #######################################################
 NAME = "recadrage"
 MOD_NAME = "plugin_crop"
@@ -36,7 +37,6 @@ EXEC_CLASS = "CropDialog"#(images, args)
 ### plugin prefs #######################################################
 FIG_COLOR = "#000000"
 FIG_POIGNEES = True
-IMAGE = "img/1.jpg"
 OUT = True
 KEEP_RATIO = False
 RATIO = (0, 0)
@@ -585,7 +585,7 @@ class CropDialog(ViewerDialog):
         self.accept()
     def undoClicked(self):
         self.reject()
-    def getReturn(self):
+    def get_return(self):
         if self.result():
             x = int(self.painting.fig.x)
             y = int(self.painting.fig.y)
@@ -667,8 +667,7 @@ class EditDialog(QtGui.QDialog):
         
 
 if __name__=="__main__":
-    app=QtGui.QApplication(sys.argv)
-    win=CropDialog([IMAGE])
-    app.connect(app, QtCore.SIGNAL("lastWindowClosed()"),
-                app, QtCore.SLOT("quit()"))
+    app = QtGui.QApplication(sys.argv)
+    app.lastWindowClosed.connect(app.quit)
+    win = CropDialog([image])
     app.exec_()

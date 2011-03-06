@@ -22,9 +22,6 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 class Item(QtGui.QStandardItem):
-    codeChanged = QtCore.pyqtSignal(str)
-    descChanged = QtCore.pyqtSignal(str)
-    argsChanged = QtCore.pyqtSignal(str)
     def __init__(self, parent=None, copy=False):
         QtGui.QStandardItem.__init__(self, parent)
         self.setEditable(False)
@@ -36,19 +33,16 @@ class Item(QtGui.QStandardItem):
         
     def setCode(self, text):
         self.code = text
-        #self.codeChanged.emit(text)
     def getCode(self):
         return self.code
         
     def setDesc(self, text):
         self.desc = text
-        #self.descChanged.emit(text)
     def getDesc(self):
         return self.desc
         
     def setArgs(self, text):
         self.args = text
-        #self.argsChanged.emit(text)
     def getArgs(self):
         return self.args
         
@@ -59,10 +53,6 @@ class DragDropListWidget(QtGui.QListView):
         QtGui.QListView.__init__(self, parent)
         self.setAcceptDrops(True)
         
-        #self.dropped = QtCore.pyqtSignal()
-        self.dropped.connect(self.test)
-    def test(self):
-        print "test reussi"
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
             event.accept()
@@ -94,9 +84,12 @@ class TextEditDialog(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
         
+        ### editeur de code ###
         self.codeEdit = QtGui.QTextEdit()
         self.codeEdit.setText(code)
         
+        ### infos ###
+        self.info = QtGui.QLabel("$i: QImage")
         ### appliquer ###
         self.okW = QtGui.QPushButton('appliquer', self)
         self.okW.clicked.connect(self.okClicked)
@@ -110,6 +103,7 @@ class TextEditDialog(QtGui.QDialog):
         
         vBox = QtGui.QVBoxLayout()
         vBox.addWidget(self.codeEdit)
+        vBox.addWidget(self.info)
         vBox.addLayout(hBox)
         
         self.setLayout(vBox)

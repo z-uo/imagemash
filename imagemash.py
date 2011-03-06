@@ -252,7 +252,7 @@ class ActionTab(QtGui.QWidget):
             et enregistre le retour"""
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
-        exec("ok, code, desc, args = %s.%s(self.parent.imgTab.return_imgs(), item.getArgs(), self.return_code(True), self).getReturn()" 
+        exec("ok, code, desc, args = %s.%s(self.parent.imgTab.return_imgs(), item.getArgs(), self.return_code(True), self).get_return()" 
                                      %(item.info["modname"], item.info["exec"]))
         if ok:
             item.setCode(code)
