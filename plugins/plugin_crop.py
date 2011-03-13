@@ -25,7 +25,7 @@ import sys, os
 
 from plugsubclass import *
 
-image = "home/pops/prog/img/IMGP0333.JPG"
+image = "/home/pops/prog/img/IMGP0333.JPG"
 ### plugin infos #######################################################
 NAME = "recadrage"
 MOD_NAME = "plugin_crop"
@@ -35,21 +35,7 @@ VERSION = 0.1
 EXEC_CLASS = "CropDialog"#(images, args)
 
 ### plugin prefs #######################################################
-FIG_COLOR = "#000000"
-FIG_POIGNEES = True
-OUT = True
-KEEP_RATIO = False
-RATIO = (0, 0)
-ZOOM_DIC = { "10%" : 0.1,
-             "25%" : 0.25,
-             "50%" : 0.5,
-             "75%" : 0.75,
-             "100%" : 1,
-             "200%" : 2,
-             "400%" : 4,
-             "800%" : 8,
-             "1600%" : 16
-           }
+
 
 class Fig(QtCore.QObject):
     """ classe représentant le rectangle défini pour recadrer l'image
@@ -74,8 +60,8 @@ class Fig(QtCore.QObject):
             self.exist = False
                  
         # ratio du rectangle
-        self.keepRatio = KEEP_RATIO
-        self.ratio = RATIO
+        self.keepRatio = False
+        self.ratio = (0, 0)
         
         # rayon des poignées du rectangle
         self.pR = 5
@@ -257,103 +243,32 @@ class Fig(QtCore.QObject):
             list.append(["poignee", poignee4])
             
         return list
+        
+        
 ########################################################################
-class Painting(QtGui.QWidget):
-    """ prévisualisation de l'image et interaction avec la souris
-    """
-    def __init__(self, parent=None, args=None):
-        QtGui.QWidget.__init__(self, parent)
-        self.parent = parent
-        
-        self.fig = Fig(self, args)
-        self.color = QtGui.QColor()
-        self.color.setNamedColor(FIG_COLOR)
-        
-        self.zoomN = 1
-        #image originale pre zoom
-        self.imOri = QtGui.QImage()
-        
-    def clic(self, event):
-        self.fig.clic(event.x(), event.y(), self.zoomN)
-
-    def move(self, event):
-        self.fig.move(event.x(), event.y(), self.zoomN)
-        self.draw()
-        
-    def paintEvent(self, ev):
-        p = QtGui.QPainter()
-        p.begin(self)
-        p.drawImage(QtCore.QPoint(0, 0), self.imQPainter)
-        p.end()
-            
-    def draw(self):
-        p = QtGui.QPainter()
-        p.begin(self.imQPainter)
-        p.drawImage(QtCore.QPoint(0, 0), self.imOriZoomed)
-        for i in self.fig.toDraw(self.zoomN, self.zImW, self.zImH):
-            if i[0] == "cadre":
-                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
-                alpha = self.color
-                alpha.setAlpha(100)
-                p.setBrush(alpha)
-                p.drawPath(i[1])
-            if i[0] == "ligne":
-                p.drawPath(i[1])
-            if i[0] == "poignee":
-                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
-                p.setBrush(QtGui.QColor(255, 255, 255, 255))
-                p.drawPath(i[1])
-        p.end()
-        self.update()
-                
-    def zoom(self, n):
-        self.zoomN = n
-        self.zImH = self.imH * self.zoomN
-        self.zImW = self.imW * self.zoomN
-        self.imOriZoomed = self.imOri.scaled(self.zImW, self.zImH)
-        self.imQPainter = self.imOri.scaled(self.zImW, self.zImH)
-        self.setFixedSize(self.zImW, self.zImH)
-        self.draw()
-        
-    def erase(self):
-        self.fig.exist = False
-        self.draw()
-                
-    def event(self, event):
-        if (event.type()==QtCore.QEvent.MouseButtonPress) and (event.button()==QtCore.Qt.LeftButton):
-            self.clic(event)
-            return True
-        elif (event.type()==QtCore.QEvent.MouseMove) and (event.buttons()==QtCore.Qt.LeftButton):
-            self.move(event)
-            return True
-        return QtGui.QWidget.event(self, event)
-        
-    def changeImage(self, image, code=""):
-        self.imOri.load(image)
-        code = code.replace("$i", "self.imOri")
-        exec code
-        ###pil code
-        #~ if code:
-            #~ im = Image.open(image)
-            #~ exec code
-            #~ self.imOri = ImageQt.ImageQt(im)
-        #~ else:
-            #~ self.imOri.load(image)
-        self.imH = self.imOri.height()
-        self.imW = self.imOri.width()
-        self.zoom(self.zoomN)
-        
-class ViewerDialog(QtGui.QDialog):
-    def __init__(self, parent=None):
+class CropDialog(QtGui.QDialog):
+    def __init__(self, images, args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
+        self.parent = parent
+        self.codeBefore = code
         
         #  zoom  | effacer| couleur
         #  action| action | h | editH | w | editW | editer
         #  image
         #                                   ok    | annuler
         
+        ### widget #####################################################
         ### zoom ###
-        self.zoom = 1    
+        self.zoomDic = { "10%" : 0.1,
+                         "25%" : 0.25,
+                         "50%" : 0.5,
+                         "75%" : 0.75,
+                         "100%" : 1,
+                         "200%" : 2,
+                         "400%" : 4,
+                         "800%" : 8,
+                         "1600%" : 16}
+        self.zoom = 1
         self.zoomW = QtGui.QComboBox(self)
         self.zoomW.addItem("10%")
         self.zoomW.addItem("25%")
@@ -365,17 +280,18 @@ class ViewerDialog(QtGui.QDialog):
         self.zoomW.addItem("800%")
         self.zoomW.addItem("1600%")
         self.zoomW.setCurrentIndex(4)
-        self.zoomW.activated[str].connect(self.zoomChanged)
         
         ### image ###
         self.imW = QtGui.QComboBox(self)
-        self.imW.setCurrentIndex(0)
-        self.imW.activated[str].connect(self.imChanged)
-        
+        self.images = []
+        for i, v in enumerate(images):
+            f = os.path.split(v)[1]
+            self.imW.addItem(f)
+            self.images.append(v)
+
         ### effacer ###
         self.eraseW = QtGui.QPushButton(self)
         self.eraseW.setIcon(QtGui.QIcon(QtGui.QPixmap('img/eraser.png')))
-        self.eraseW.clicked.connect(self.eraseClicked)
         
         ### couleur ###
         self.color = QtGui.QColor(0, 0, 0) 
@@ -384,79 +300,15 @@ class ViewerDialog(QtGui.QDialog):
         
         self.colorW = QtGui.QPushButton(self)
         self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
-        self.colorW.clicked.connect(self.colorClicked)
         
         ### cadre ###
         self.infoL = QtGui.QLabel(" ")
         
-        ### appliquer ###
-        self.okW = QtGui.QPushButton('appliquer', self)
-        self.okW.clicked.connect(self.okClicked)
-
-        ### annuler ###
-        self.undoW = QtGui.QPushButton('annuler', self)
-        self.undoW.clicked.connect(self.undoClicked)
-        
-        # zoom / effacer / couleur
-        self.toolBox = QtGui.QHBoxLayout()
-        self.toolBox.setSpacing(2)
-        self.toolBox.addWidget(self.zoomW)
-        self.toolBox.addWidget(self.imW)
-        self.toolBox.addWidget(self.eraseW)
-        self.toolBox.addWidget(self.colorW)
-        self.toolBox.insertSpacing(4, 6)
-        self.toolBox.addWidget(self.infoL)
-        self.toolBox.addStretch(0)
-        
-        # ok annuler
-        self.okBox = QtGui.QHBoxLayout()
-        self.okBox.setSpacing(2)
-        self.okBox.addStretch(0)
-        self.okBox.addWidget(self.okW)
-        self.okBox.addWidget(self.undoW)
-        
-        self.grid = QtGui.QGridLayout()
-        self.grid.setSpacing(2)
-        self.grid.addLayout(self.toolBox, 0, 0)
-        self.grid.addLayout(self.okBox, 3, 0)
-        
-        self.setLayout(self.grid)
-       
-    def zoomChanged(self, text):
-        print "zoomChanged"
-        print text
-    def imChanged(self, text):
-        print "imChanged"
-        print text
-    def colorClicked(self):
-        print "colorClicked"
-    def eraseClicked(self):
-        print "eraseClicked"
-    def okClicked(self):
-        print "okClicked"
-    def undoClicked(self):
-        print "undoClicked"
-        
-        
-class CropDialog(ViewerDialog):
-    def __init__(self, images, args=None, code="", parent=None):
-        ViewerDialog.__init__(self, parent)
-        
-        ### liste des images ###
-        self.images = []
-        for i, v in enumerate(images):
-            f = os.path.split(v)[1]
-            self.imW.addItem(f)
-            self.images.append(v)
-            
-        ### code a apliquer a une image a l'ouverture ###
-        self.codeBefore = code
-            
         ### viewer ###
         self.painting = Painting(self, args)
+        self.painting.fig = Fig(self, args)
         self.viewer = Viewer(self)
         self.viewer.setWidget(self.painting)
-        self.imChanged(self.images[0])
         
         ### action ###
         self.actionL = QtGui.QLabel("action")
@@ -464,53 +316,93 @@ class CropDialog(ViewerDialog):
         self.actionW.addItem("none")
         self.actionW.addItem("ratio")
         self.actionW.addItem("pixel")
-        self.actionW.addItem("redim")
-        self.actionW.activated[str].connect(self.actionChanged)       
+        self.actionW.addItem("redim")      
         
         ### w ###
         self.wL = QtGui.QLabel("largeur : ")
-        self.wW = QtGui.QLineEdit(self)
+        self.wW = QtGui.QLineEdit("0")
         self.wW.setValidator(QtGui.QIntValidator(self.wW))
-        self.wW.setText("0")
-        self.wW.textChanged.connect(self.actionChanged)
         
         ### h ###
         self.hL = QtGui.QLabel("hauteur : ")
-        self.hW = QtGui.QLineEdit(self)
+        self.hW = QtGui.QLineEdit("0")
         self.hW.setValidator(QtGui.QIntValidator(self.hW))
-        self.hW.setText("0")
-        self.hW.textChanged.connect(self.actionChanged)
         
-        ### editer ###
+        ### edit ###
         self.editW = QtGui.QPushButton('editer', self)
-        self.editW.clicked.connect(self.editClicked)
         
-        ### label infoL ###
-        self.painting.fig.rectChanged.connect(self.rectChanged)
+        ### apply, undo ###
+        self.okW = QtGui.QPushButton('appliquer', self)
+        self.undoW = QtGui.QPushButton('annuler', self)
+        
+        ### function ###################################################
+        self.imChanged(self.images[0])
         self.rectChanged()
         
-        self.cropBox = QtGui.QHBoxLayout()
-        self.cropBox.setSpacing(2)
-        self.cropBox.addWidget(self.actionL)
-        self.cropBox.addWidget(self.actionW)
-        self.cropBox.insertSpacing(2, 6)
-        self.cropBox.addWidget(self.wL)
-        self.cropBox.addWidget(self.wW)
-        self.cropBox.addWidget(self.hL)
-        self.cropBox.addWidget(self.hW)
-        self.cropBox.insertSpacing(7, 6)
-        self.cropBox.addWidget(self.editW)
+        ### connexion ##################################################
+        self.zoomW.activated[str].connect(self.zoomChanged)
+        self.imW.activated[str].connect(self.imChanged)
+        self.eraseW.clicked.connect(self.eraseClicked)
+        self.colorW.clicked.connect(self.colorClicked)
         
-        self.grid.addLayout(self.cropBox, 1, 0)
-        self.grid.addWidget(self.viewer, 2, 0)
+        self.actionW.activated[str].connect(self.actionChanged) 
+        self.wW.textChanged.connect(self.actionChanged)
+        self.hW.textChanged.connect(self.actionChanged)
+        self.editW.clicked.connect(self.editClicked)
+        self.painting.fig.rectChanged.connect(self.rectChanged)
+        
+        self.okW.clicked.connect(self.okClicked)
+        self.undoW.clicked.connect(self.undoClicked)
+        
+        ### layout #####################################################
+        ### zoom, erase, color ###
+        toolBox = QtGui.QHBoxLayout()
+        toolBox.setSpacing(2)
+        toolBox.addWidget(self.zoomW)
+        toolBox.addWidget(self.imW)
+        toolBox.addWidget(self.eraseW)
+        toolBox.addWidget(self.colorW)
+        toolBox.insertSpacing(4, 6)
+        toolBox.addWidget(self.infoL)
+        toolBox.addStretch(0)
+        
+        ### action, w, h, edit ###
+        cropBox = QtGui.QHBoxLayout()
+        cropBox.setSpacing(2)
+        cropBox.addWidget(self.actionL)
+        cropBox.addWidget(self.actionW)
+        cropBox.insertSpacing(2, 6)
+        cropBox.addWidget(self.wL)
+        cropBox.addWidget(self.wW)
+        cropBox.addWidget(self.hL)
+        cropBox.addWidget(self.hW)
+        cropBox.insertSpacing(7, 6)
+        cropBox.addWidget(self.editW)
+        
+        ### ok, undo ###
+        okBox = QtGui.QHBoxLayout()
+        okBox.addStretch(0)
+        okBox.addWidget(self.okW)
+        okBox.addWidget(self.undoW)
+        
+        ### layout ###
+        layout = QtGui.QVBoxLayout()
+        layout.setSpacing(2)
+        layout.addLayout(toolBox)
+        layout.addLayout(cropBox)
+        layout.addWidget(self.viewer)
+        layout.addLayout(okBox)
+        
+        self.setLayout(layout)
         self.exec_()
        
     def zoomChanged(self, text):
-        z = ZOOM_DIC[str(text)]
+        z = self.zoomDic[str(text)]
         self.painting.zoom(z)
         
     def imChanged(self, text):
         im = self.images[self.imW.currentIndex()]
+        print im
         self.painting.changeImage(im, self.codeBefore)
                     
     def colorClicked(self):

@@ -47,3 +47,79 @@ class Viewer(QtGui.QScrollArea):
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - diffY)
             return True
         return QtGui.QScrollArea.event(self, event)  
+
+class Painting(QtGui.QWidget):
+    """ prévisualisation de l'image et interaction avec la souris
+    """
+    def __init__(self, parent=None, args=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.parent = parent
+        
+        self.color = QtGui.QColor()
+        self.color.setNamedColor("#000000")
+        
+        self.zoomN = 1
+        self.imOri = QtGui.QImage()
+        
+    def clic(self, event):
+        self.fig.clic(event.x(), event.y(), self.zoomN)
+
+    def move(self, event):
+        self.fig.move(event.x(), event.y(), self.zoomN)
+        self.draw()
+        
+    def paintEvent(self, ev):
+        p = QtGui.QPainter()
+        p.begin(self)
+        p.drawImage(QtCore.QPoint(0, 0), self.imQPainter)
+        p.end()
+            
+    def draw(self):
+        p = QtGui.QPainter()
+        p.begin(self.imQPainter)
+        p.drawImage(QtCore.QPoint(0, 0), self.imOriZoomed)
+        for i in self.fig.toDraw(self.zoomN, self.zImW, self.zImH):
+            if i[0] == "cadre":
+                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
+                alpha = self.color
+                alpha.setAlpha(100)
+                p.setBrush(alpha)
+                p.drawPath(i[1])
+            if i[0] == "ligne":
+                p.drawPath(i[1])
+            if i[0] == "poignee":
+                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
+                p.setBrush(QtGui.QColor(255, 255, 255, 255))
+                p.drawPath(i[1])
+        p.end()
+        self.update()
+                
+    def zoom(self, n):
+        self.zoomN = n
+        self.zImH = self.imH * self.zoomN
+        self.zImW = self.imW * self.zoomN
+        self.imOriZoomed = self.imOri.scaled(self.zImW, self.zImH)
+        self.imQPainter = self.imOri.scaled(self.zImW, self.zImH)
+        self.setFixedSize(self.zImW, self.zImH)
+        self.draw()
+        
+    def erase(self):
+        self.fig.exist = False
+        self.draw()
+                
+    def event(self, event):
+        if (event.type()==QtCore.QEvent.MouseButtonPress) and (event.button()==QtCore.Qt.LeftButton):
+            self.clic(event)
+            return True
+        elif (event.type()==QtCore.QEvent.MouseMove) and (event.buttons()==QtCore.Qt.LeftButton):
+            self.move(event)
+            return True
+        return QtGui.QWidget.event(self, event)
+        
+    def changeImage(self, image, code=""):
+        self.imOri.load(image)
+        code = code.replace("$i", "self.imOri")
+        exec code
+        self.imH = self.imOri.height()
+        self.imW = self.imOri.width()
+        self.zoom(self.zoomN)
