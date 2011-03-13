@@ -18,7 +18,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
+import sys
+import os
 import imp
 import re
 import string
@@ -37,7 +38,7 @@ class ImgTab(QtGui.QWidget):
         self.title = "images"
         
         ### modele ou sont enregistré les images ###
-        self.modImgList = QtGui.QStandardItemModel(0,1)
+        self.modImgList = QtGui.QStandardItemModel(0, 1)
         self.add_images(images)
         
         ### listview ou sont affichées les images ###
@@ -77,7 +78,9 @@ class ImgTab(QtGui.QWidget):
         """ boite de dialogue d'ajout d'images """
         url = QtGui.QFileDialog.getOpenFileNames(self, 
                 "Ajouter des images", "", 
-                "Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF);;Tous les fichiers (*)")
+                """Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif 
+                           *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)
+                           ;;Tous les fichiers (*)""")
         self.add_images(url)
             
     def remove_images_clicked(self):
@@ -108,7 +111,7 @@ class ImgTab(QtGui.QWidget):
                 ext == ".jpg" or ext == ".JPG" or 
                 ext == ".jpeg" or ext == ".JPEG" or
                 ext == ".tif" or ext == ".TIF" or
-                ext == ".tiff" or ext == ".TIFF" )):
+                ext == ".tiff" or ext == ".TIFF")):
                 images.append(i)
         images.sort()
         return images
@@ -140,12 +143,12 @@ class ImgTab(QtGui.QWidget):
     def create_thumbnail(self, chemin="alpha"):
         """ renvoi ou cré une miniature de l'image
             les miniatures sont enregistrées dans self.dicoImg """
-        if self.dicoImg.has_key(chemin):
+        if self.dicoImg in chemin:
             return self.dicoImg[chemin]
         else:
             if chemin == "alpha":
-                img = QtGui.QPixmap(200,200)
-                img.fill(QtGui.QColor(0,0,0,0))
+                img = QtGui.QPixmap(200, 200)
+                img.fill(QtGui.QColor(0, 0, 0, 0))
             else:
                 img = QtGui.QPixmap(chemin).scaledToWidth(200)
             self.dicoImg[chemin] = img
@@ -153,7 +156,7 @@ class ImgTab(QtGui.QWidget):
             
     def delete_thumbnail(self, image):
         """ suprime la miniature de l'image du dictionnaire """
-        if self.dicoImg.has_key(image):
+        if self.dicoImg in image:
             del self.dicoImg[image]
             
 
@@ -167,7 +170,7 @@ class ActionTab(QtGui.QWidget):
         
         ### action disponibles ###
         self.actionAvailableListLabel = QtGui.QLabel("actions disponibles")
-        self.modActionAvailableList = QtGui.QStandardItemModel(0,1)
+        self.modActionAvailableList = QtGui.QStandardItemModel(0, 1)
         self.import_plugins()
         
         self.actionAvailableList = QtGui.QListView()
@@ -182,7 +185,7 @@ class ActionTab(QtGui.QWidget):
         
         ### action ###
         self.actionListLabel = QtGui.QLabel("actions")
-        self.modActionList = QtGui.QStandardItemModel(0,1)
+        self.modActionList = QtGui.QStandardItemModel(0, 1)
         self.actionList = QtGui.QListView()
         self.actionList.setModel(self.modActionList)
         self.actionList.selectionModel().selectionChanged.connect(self.sel_action)
@@ -252,8 +255,9 @@ class ActionTab(QtGui.QWidget):
             et enregistre le retour"""
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
-        exec("ok, code, desc, args = %s.%s(self.parent.imgTab.return_imgs(), item.getArgs(), self.return_code(True), self).get_return()" 
-                                     %(item.info["modname"], item.info["exec"]))
+        exec ("""ok, code, desc, args = %s.%s(self.parent.imgTab.return_imgs(), 
+                    item.getArgs(), self.return_code(True), self).get_return()""" 
+                    %(item.info["modname"], item.info["exec"]))
         if ok:
             item.setCode(code)
             item.setDesc(desc)
@@ -273,7 +277,7 @@ class ActionTab(QtGui.QWidget):
         code = ""
         for i in range(nb):
             code = """%s
-%s"""%(code, self.modActionList.item(i).getCode())
+%s""" %(code, self.modActionList.item(i).getCode())
         return code
         
         
@@ -323,7 +327,7 @@ class SaveTab(QtGui.QWidget):
         
         ### layout ###
         fileGrid = QtGui.QGridLayout()
-        fileGrid.addWidget(self.dossierLabel,0, 0)
+        fileGrid.addWidget(self.dossierLabel, 0, 0)
         fileGrid.addWidget(self.dossierEdit, 0, 1, 1, 2)
         fileGrid.addWidget(self.dossierChooser, 0, 3)
         fileGrid.addWidget(self.filenameLabel, 2, 0)
@@ -346,9 +350,11 @@ class SaveTab(QtGui.QWidget):
     def dir_changed(self):
         """ modification du dossier d'enregistrement """
         self.dossier = self.dossierEdit.text()
+        
     def change_dir(self):
         """ boite de dialogue changement dossier enregistrement """
-        url = QtGui.QFileDialog.getExistingDirectory(self, "Choisir le dossier de sauvegarde", self.dossier)
+        url = QtGui.QFileDialog.getExistingDirectory(self, 
+                 "Choisir le dossier de sauvegarde", self.dossier)
         if url:
             self.dossierEdit.setText(url)
             
@@ -395,7 +401,8 @@ class SaveTab(QtGui.QWidget):
         for i in images:
             self.infoLabel.setText(i)
             n = n+1
-            fn = self.return_new_filename(os.path.split(i)[1], str(self.filenameEdit.text()), n)
+            fn = self.return_new_filename(os.path.split(i)[1], 
+                                          str(self.filenameEdit.text()), n)
             fn = os.path.join(rep, fn)
             print fn
             im = QtGui.QImage()
@@ -405,6 +412,7 @@ class SaveTab(QtGui.QWidget):
             ok = im.save(fn)
             print ok
         self.infoLabel.setText("toutes les images ont été traitées ou pas")
+        
         
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
@@ -452,7 +460,8 @@ if __name__=="__main__":
     
     ### import des plugins #############################################
     pluginPath = os.path.join(os.path.dirname(imp.find_module("imagemash")[1]), "plugins/")
-    pluginFiles = [fname[:-3] for fname in os.listdir(pluginPath) if fname.endswith(".py") and fname.startswith("plugin_")]
+    pluginFiles = [fname[:-3] for fname in os.listdir(pluginPath) 
+                   if fname.endswith(".py") and fname.startswith("plugin_")]
     if not pluginPath in sys.path:
         sys.path[:0] = [pluginPath]
     importedModules = []
@@ -465,4 +474,3 @@ if __name__=="__main__":
     app.lastWindowClosed.connect(app.quit)
     win = MainDialog(fichiers, dossier)
     app.exec_()
-            
