@@ -21,9 +21,10 @@ from __future__ import division
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4 import Qt
+#from PyQt4 import Qt
 import sys, os
 
+# TODO: gerer sans image
 image = "/home/pops/prog/img/IMGP0333.JPG"
 ### plugin infos #######################################################
 NAME = "redimmensionner"
@@ -34,7 +35,7 @@ VERSION = 0.1
 EXEC_CLASS = "ResizeDialog"#(images, args)
 
 class ResizeDialog(QtGui.QDialog):
-    def __init__(self, images, args=None, code="", parent=None):
+    def __init__(self, images=[], args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
         self.codeBefore = code
@@ -42,126 +43,205 @@ class ResizeDialog(QtGui.QDialog):
         ### liste des images ###
         self.im = QtGui.QImage()
         self.imW = QtGui.QComboBox(self)
-        self.imW.setCurrentIndex(0)
-        self.imW.activated[str].connect(self.im_changed)
-        
         self.images = []
         for i, v in enumerate(images):
             f = os.path.split(v)[1]
             self.imW.addItem(f)
             self.images.append(v)
-        self.image = self.images[0]
-        
-        ### info sur l'image originale ###
-        self.imOriInfo = QtGui.QLabel("")
-        self.im_changed()
         
         ### ratio ###
-        self.ratio = "set size"
+        self.ratioIndex = ["keep aspect ratio",
+                           "keep aspect ratio by extending",
+                           "ignore aspect ratio",
+                           "fit to width",
+                           "fit to height"]
         self.ratioW = QtGui.QComboBox(self)
-        self.ratioW.addItem("set size")
-        self.ratioW.addItem("fit to width")
-        self.ratioW.addItem("fit to height")
-        self.ratioW.setCurrentIndex(0)
-        self.ratioW.activated[str].connect(self.ratio_changed)
+        for i in self.ratioIndex:
+            self.ratioW.addItem(i)
         
+        ### width ###
         self.wL = QtGui.QLabel("width")
         self.wW = QtGui.QLineEdit(self)
         self.wW.setValidator(QtGui.QIntValidator(self.wW))
-        self.wW.setText(str(self.im.width()))
-        self.wW.textChanged[str].connect(self.w_changed)
-
+        
+        ### height ###
         self.hL = QtGui.QLabel("height")
         self.hW = QtGui.QLineEdit(self)
         self.hW.setValidator(QtGui.QIntValidator(self.hW))
-        self.hW.setText(str(self.im.height()))
-        self.hW.textChanged[str].connect(self.h_changed)
         
-        ### appliquer ###
-        self.okW = QtGui.QPushButton('appliquer', self)
+        ### info labels ###
+        self.oriL = QtGui.QLabel("original size")
+        self.oriWL = QtGui.QLabel("")
+        self.oriHL = QtGui.QLabel("")
+        
+        self.newL = QtGui.QLabel("new size")
+        self.newWL = QtGui.QLabel("")
+        self.newHL = QtGui.QLabel("")
+        
+        ### apply, undo ###
+        self.okW = QtGui.QPushButton('apply', self)
+        self.undoW = QtGui.QPushButton('undo', self)
+        
+        ### initialise le ratio et l'image courante ###
+        self.im_changed(False)
+        if args:
+            self.ratioW.setCurrentIndex(self.ratioIndex.index(args[2]))
+            self.wW.setText(str(args[0]))
+            self.hW.setText(str(args[1]))
+        else:
+            self.wW.setText(str(self.im.width()))
+            self.hW.setText(str(self.im.height()))
+        self.ratio_changed()
+        
+        ### connecte tout le bordel ###
+        self.imW.activated.connect(self.im_changed)
+        self.ratioW.activated.connect(self.ratio_changed)
+        self.wW.textChanged.connect(self.maj)
+        self.hW.textChanged.connect(self.maj)
         self.okW.clicked.connect(self.ok_clicked)
-        
-        ### annuler ###
-        self.undoW = QtGui.QPushButton('annuler', self)
         self.undoW.clicked.connect(self.undo_clicked)
         
         grid = QtGui.QGridLayout()
-        grid.setSpacing(2)
+        grid.setSpacing(3)
+        grid.setColumnMinimumWidth(0, 50)
+        grid.setColumnMinimumWidth(1, 50)
+        grid.setColumnMinimumWidth(2, 100)
+        grid.setColumnMinimumWidth(3, 100)
+
         grid.addWidget(self.imW, 0, 1)
-        grid.addWidget(self.imOriInfo, 0, 2)
-        grid.addWidget(self.ratioW, 1, 1)
-        grid.addWidget(self.wL, 2, 0)
-        grid.addWidget(self.wW, 2, 1)
-        grid.addWidget(self.hL, 3, 0)
-        grid.addWidget(self.hW, 3, 1)
+        grid.addWidget(self.ratioW, 1, 1, 1, 3)
         
-        hBox = QtGui.QHBoxLayout()
-        hBox.addWidget(self.okW)
-        hBox.addWidget(self.undoW)
+        grid.addWidget(self.wL, 3, 0)
+        grid.addWidget(self.hL, 4, 0)
         
-        grid.addLayout(hBox, 4, 0, 1, 2)
-        self.setLayout(grid)
+        grid.addWidget(self.wW, 3, 1)
+        grid.addWidget(self.hW, 4, 1)
+        
+        grid.addWidget(self.oriL, 2, 2)
+        grid.addWidget(self.oriWL, 3, 2)
+        grid.addWidget(self.oriHL, 4, 2)
+        
+        grid.addWidget(self.newL, 2, 3)
+        grid.addWidget(self.newWL, 3, 3)
+        grid.addWidget(self.newHL, 4, 3)
+        
+        okBox = QtGui.QHBoxLayout()
+        okBox.addStretch(0)
+        okBox.addWidget(self.okW)
+        okBox.addWidget(self.undoW)
+        
+        vBox = QtGui.QVBoxLayout()
+        vBox.addLayout(grid)
+        vBox.addStretch(0)
+        vBox.addLayout(okBox)
+        
+        self.setLayout(vBox)
         self.exec_()
         
-    def im_changed(self, text=None):
-        self.im.load(self.images[self.imW.currentIndex()])
-        print self.images[self.imW.currentIndex()]
-        code = self.codeBefore.replace("$i", "self.im")
-        exec code
-        self.imOriInfo.setText("%s / %s"%(self.im.height(),self.im.width()))
+    def im_changed(self, maj=True):
+        if self.images:
+            self.im.load(self.images[self.imW.currentIndex()])
+            code = self.codeBefore.replace("$i", "self.im")
+            exec code
+            self.oriWL.setText("%s"%(self.im.width(),))
+            self.oriHL.setText("%s"%(self.im.height(),))
+            if maj:
+                self.maj()
         
-        
-    def ratio_changed(self, text):
-        self.ratio = text
-        if text == "set size":
-            self.hW.setDisabled(False)
-            self.wW.setDisabled(False)
-        elif text == "fit to width":
+    def ratio_changed(self):
+        ratio = str(self.ratioW.currentText())
+        if ratio == "fit to width":
             self.hW.setDisabled(True)
             self.wW.setDisabled(False)
-            self.w_changed(self.wW.text())
-        elif text == "fit to height":
+        elif ratio == "fit to height":
             self.hW.setDisabled(False)
             self.wW.setDisabled(True)
-            self.h_changed(self.hW.text())
-    
-    def w_changed(self, text):
-        if self.ratio == "fit to width" and text > 0:
-            h = int((self.im.height() * int(text)) / self.im.width())
-            self.hW.setText(str(h))
+        else:
+            self.hW.setDisabled(False)
+            self.wW.setDisabled(False)
+        self.maj()
             
-    def h_changed(self, text):
-        if self.ratio == "fit to height" and text > 0:
-            w = int((self.im.width() * int(text)) / self.im.height())
-            self.wW.setText(str(w))
+    def maj(self):
+        w = int(self.wW.text()) or 0
+        h = int(self.hW.text()) or 0
+        if self.images:
+            oriW = int(self.im.width())
+            oriH = int(self.im.height())
+            ratio = str(self.ratioW.currentText())
+            if ratio == "keep aspect ratio" and w > 0 and h > 0:
+                oriRatio = oriW / oriH 
+                newRatio = w / h
+                if oriRatio >= newRatio:
+                    h = int((oriH * w) / oriW)
+                elif oriRatio < newRatio:
+                    w = int((oriW * h) / oriH)
+                    
+            elif ratio == "keep aspect ratio by extending" and w > 0 and h > 0:
+                oriRatio = oriW / oriH 
+                newRatio = w / h
+                if oriRatio <= newRatio:
+                    h = int((oriH * w) / oriW)
+                elif oriRatio > newRatio:
+                    w = int((oriW * h) / oriH)
+            elif ratio == "ignore aspect ratio" and w > 0 and h > 0:
+                pass
+            elif ratio == "fit to width" and w > 0:
+                    h = int((oriH * w) / oriW)
+            elif ratio == "fit to height" and h > 0:
+                    w = int((oriW * h) / oriH)
+            else:
+                w = oriW
+                h = oriH
+        self.newWL.setText(str(w))
+        self.newHL.setText(str(h))
     
     def ok_clicked(self):
         self.accept()
+        
     def undo_clicked(self):
         self.reject()
         
     def get_return(self):
-        w = self.wW.text()
-        h = self.hW.text()
-        if self.result() and w > 0 and h > 0:
+        if self.result():
+            w = self.wW.text()
+            h = self.hW.text()
+            ratio = str(self.ratioW.currentText())
+            transform = "QtCore.Qt.SmoothTransformation"
             
-            if self.ratio == "set size":
-                code = "$i = $i.scaled(%s, %s, QtCh = %sore.Qt.IgnoreAspectRatio, QtCore.Qt.SmoothTransformation)" %(w, h)
-                desc = "w = %s h = %s" %(w, h)
-            elif self.ratio == "fit to width":
-                code = "$i = $i.scaledToWidth(%s, QtCore.Qt.SmoothTransformation)" %(w,)
-                desc = "fit to width (%spx)" %(w,)
-            elif self.ratio == "fit to height":
-                code = "$i = $i.scaledToHeight(%s, QtCore.Qt.SmoothTransformation)" %(h,)
-                desc = "fit to height (%spx)" %(h,)
-            args = (w, h)
+            if ratio == "keep aspect ratio" and w > 0 and h > 0:
+                code = "$i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatio, %s)" %(w, h, transform)
+                desc = """keep aspect ratio
+w = %spx
+h = %spx""" %(w, h)
+            elif ratio == "keep aspect ratio by extending" and w > 0 and h > 0:
+                code = "$i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatioByExpanding, %s)" %(w, h, transform)
+                desc = """keep aspect ratio by extending
+w = %spx
+h = %spx""" %(w, h)
+            elif ratio == "ignore aspect ratio" and w > 0 and h > 0:
+                code = "$i = $i.scaled(%s, %s, QtCore.Qt.IgnoreAspectRatio, %s)" %(w, h, transform)
+                desc = """ignore aspect ratio
+w = %spx
+h = %spx""" %(w, h)
+            elif ratio == "fit to width" and w > 0:
+                code = "$i = $i.scaledToWidth(%s, %s)" %(w, transform)
+                desc = """fit to width
+w = %spx""" %(w,)
+            elif ratio == "fit to height" and h > 0:
+                code = "$i = $i.scaledToHeight(%s, %s)" %(h, transform)
+                desc = """fit to height
+h = %spx""" %(h,)
+            else:
+                code = ""
+                desc = ""
+            args = (w, h, ratio)
             return True , code, desc, args
         else:
             return False, None, None, None
-    def apply_args(self, args):
-        pass
+        
 if __name__=="__main__":
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
-    win = ResizeDialog([image])
+    win = ResizeDialog()
+    #~ win = ResizeDialog([image], (10, 10, "fit to height"))
     app.exec_()
