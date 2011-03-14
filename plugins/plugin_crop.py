@@ -258,29 +258,6 @@ class CropDialog(QtGui.QDialog):
         #                                   ok    | annuler
         
         ### widget #####################################################
-        ### zoom ###
-        self.zoomDic = { "10%" : 0.1,
-                         "25%" : 0.25,
-                         "50%" : 0.5,
-                         "75%" : 0.75,
-                         "100%" : 1,
-                         "200%" : 2,
-                         "400%" : 4,
-                         "800%" : 8,
-                         "1600%" : 16}
-        self.zoom = 1
-        self.zoomW = QtGui.QComboBox(self)
-        self.zoomW.addItem("10%")
-        self.zoomW.addItem("25%")
-        self.zoomW.addItem("50%")
-        self.zoomW.addItem("75%")
-        self.zoomW.addItem("100%")
-        self.zoomW.addItem("200%")
-        self.zoomW.addItem("400%")
-        self.zoomW.addItem("800%")
-        self.zoomW.addItem("1600%")
-        self.zoomW.setCurrentIndex(4)
-        
         ### image ###
         self.imW = QtGui.QComboBox(self)
         self.images = []
@@ -290,19 +267,36 @@ class CropDialog(QtGui.QDialog):
             self.images.append(v)
 
         ### effacer ###
-        self.eraseW = QtGui.QPushButton(self)
-        self.eraseW.setIcon(QtGui.QIcon(QtGui.QPixmap('img/eraser.png')))
-        
+        self.eraseW = QtGui.QToolButton(self)
+        self.eraseW.setAutoRaise(True)
+        self.eraseW.setIcon(QtGui.QIcon(QtGui.QPixmap('icons/black_eraser.svg')))
         ### couleur ###
-        self.color = QtGui.QColor(0, 0, 0) 
+        self.color = QtGui.QColor(0, 0, 0)
         self.colorIcon = QtGui.QPixmap(22, 22)
         self.colorIcon.fill(self.color)
         
-        self.colorW = QtGui.QPushButton(self)
+        self.colorW = QtGui.QToolButton(self)
+        self.colorW.setAutoRaise(True)
         self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
         
-        ### cadre ###
-        self.infoL = QtGui.QLabel(" ")
+        ### zoom buttons ###
+        self.zoomInW = QtGui.QToolButton()
+        self.zoomInW.setAutoRaise(True)
+        self.zoomInW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_in.svg")))
+        self.zoomOutW = QtGui.QToolButton()
+        self.zoomOutW.setAutoRaise(True)
+        self.zoomOutW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_out.svg")))
+        self.zoomOneW = QtGui.QToolButton()
+        self.zoomOneW.setAutoRaise(True)
+        self.zoomOneW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_one.svg")))
+        
+        ### labels info ###
+        self.oriL = QtGui.QLabel("original size")
+        self.oriWL = QtGui.QLabel("")
+        self.oriHL = QtGui.QLabel("")
+        self.newL = QtGui.QLabel("new size")
+        self.newWL = QtGui.QLabel("")
+        self.newHL = QtGui.QLabel("")
         
         ### viewer ###
         self.painting = Painting(self, args)
@@ -313,10 +307,10 @@ class CropDialog(QtGui.QDialog):
         ### action ###
         self.actionL = QtGui.QLabel("action")
         self.actionW = QtGui.QComboBox(self)
-        self.actionW.addItem("none")
-        self.actionW.addItem("ratio")
-        self.actionW.addItem("pixel")
-        self.actionW.addItem("redim")      
+        self.actionW.addItem("ignore aspect ratio")
+        self.actionW.addItem("keep aspect ratio")
+        self.actionW.addItem("keep aspect ratio and resize")
+        self.actionW.addItem("recadre au pixel pres")      
         
         ### w ###
         self.wL = QtGui.QLabel("largeur : ")
@@ -340,7 +334,6 @@ class CropDialog(QtGui.QDialog):
         self.rectChanged()
         
         ### connexion ##################################################
-        self.zoomW.activated[str].connect(self.zoomChanged)
         self.imW.activated[str].connect(self.imChanged)
         self.eraseW.clicked.connect(self.eraseClicked)
         self.colorW.clicked.connect(self.colorClicked)
@@ -354,30 +347,41 @@ class CropDialog(QtGui.QDialog):
         self.okW.clicked.connect(self.okClicked)
         self.undoW.clicked.connect(self.undoClicked)
         
+        self.zoomInW.clicked.connect(self.zoomIn)
+        self.viewer.zoomIn.connect(self.zoomIn)
+        self.zoomOutW.clicked.connect(self.zoomOut)
+        self.viewer.zoomOut.connect(self.zoomOut)
+        self.zoomOneW.clicked.connect(self.zoomOne)
+        
         ### layout #####################################################
-        ### zoom, erase, color ###
+        
         toolBox = QtGui.QHBoxLayout()
-        toolBox.setSpacing(2)
-        toolBox.addWidget(self.zoomW)
-        toolBox.addWidget(self.imW)
+        toolBox.addWidget(self.zoomInW)
+        toolBox.addWidget(self.zoomOutW)
+        toolBox.addWidget(self.zoomOneW)
         toolBox.addWidget(self.eraseW)
         toolBox.addWidget(self.colorW)
-        toolBox.insertSpacing(4, 6)
-        toolBox.addWidget(self.infoL)
         toolBox.addStretch(0)
         
-        ### action, w, h, edit ###
-        cropBox = QtGui.QHBoxLayout()
-        cropBox.setSpacing(2)
-        cropBox.addWidget(self.actionL)
-        cropBox.addWidget(self.actionW)
-        cropBox.insertSpacing(2, 6)
-        cropBox.addWidget(self.wL)
-        cropBox.addWidget(self.wW)
-        cropBox.addWidget(self.hL)
-        cropBox.addWidget(self.hW)
-        cropBox.insertSpacing(7, 6)
-        cropBox.addWidget(self.editW)
+        grid = QtGui.QGridLayout()
+        
+        grid.addWidget(self.imW, 0, 1, 1, 2)
+        grid.addWidget(self.editW, 1, 1, 1, 2)
+        grid.addLayout(toolBox, 2, 1, 1, 2)
+        
+        grid.addWidget(self.actionW, 0, 3, 1, 2)
+        grid.addWidget(self.wL, 1, 3)
+        grid.addWidget(self.hL, 2, 3)
+        grid.addWidget(self.wW, 1, 4)
+        grid.addWidget(self.hW, 2, 4)
+        
+        grid.addWidget(self.oriL, 0, 5)
+        grid.addWidget(self.oriWL, 1, 5)
+        grid.addWidget(self.oriHL, 2, 5)
+        
+        grid.addWidget(self.newL, 0, 6)
+        grid.addWidget(self.newWL, 1, 6)
+        grid.addWidget(self.newHL, 2, 6)
         
         ### ok, undo ###
         okBox = QtGui.QHBoxLayout()
@@ -388,21 +392,26 @@ class CropDialog(QtGui.QDialog):
         ### layout ###
         layout = QtGui.QVBoxLayout()
         layout.setSpacing(2)
-        layout.addLayout(toolBox)
-        layout.addLayout(cropBox)
+        layout.addLayout(grid)
         layout.addWidget(self.viewer)
         layout.addLayout(okBox)
         
         self.setLayout(layout)
         self.exec_()
-       
-    def zoomChanged(self, text):
-        z = self.zoomDic[str(text)]
-        self.painting.zoom(z)
+        
+    def zoomIn(self):
+        self.painting.zoom(2.0)
+        self.viewer.zoom(2.0)
+        
+    def zoomOut(self):
+        self.painting.zoom(0.5)
+        self.viewer.zoom(0.5)
+        
+    def zoomOne(self):
+        self.painting.zoom(0)
         
     def imChanged(self, text):
         im = self.images[self.imW.currentIndex()]
-        print im
         self.painting.changeImage(im, self.codeBefore)
                     
     def colorClicked(self):
@@ -422,12 +431,12 @@ class CropDialog(QtGui.QDialog):
         h = self.hW.text().toInt()[0]
         
         if w > 0 and h > 0:
-            if action == "none":
+            if action == "ignore aspect ratio":
                 self.painting.fig.keepRatio = False
                 self.painting.fig.scale = True
                 self.painting.fig.outW = False
                 self.painting.fig.outH = False
-            elif action == "ratio":
+            elif action == "keep aspect ratio":
                 self.painting.fig.keepRatio = True
                 self.painting.fig.scale = True
                 self.painting.fig.outW = False
@@ -437,12 +446,12 @@ class CropDialog(QtGui.QDialog):
                 self.painting.fig.KeepRatio()
                 self.painting.draw()
                 
-            elif action == "pixel":
+            elif action == "keep aspect ratio and resize":
                 self.painting.fig.scale = False ## TODO
                 self.painting.fig.keepRatio = False
                 self.painting.fig.w = w
                 self.painting.fig.h = h
-            elif action == "redim":
+            elif action == "recadre au pixel pres":
                 self.painting.fig.keepRatio = True
                 self.painting.fig.scale = True
                 self.painting.fig.ratio = (w, h)
@@ -471,7 +480,7 @@ class CropDialog(QtGui.QDialog):
             text = "taille de l'image: %s px / %s px      nouvelle taille: %s px / %s px" %(self.painting.imW, self.painting.imH, info["w"], info["h"])
         else:
             text = "taille de l'image: %s px / %s px      nouvelle taille: %s px / %s px          " %(self.painting.imW, self.painting.imH, self.painting.imW, self.painting.imH)
-        self.infoL.setText(text)
+
         
     def okClicked(self):
         self.accept()
@@ -483,8 +492,6 @@ class CropDialog(QtGui.QDialog):
             y = int(self.painting.fig.y)
             w = int(self.painting.fig.w)
             h = int(self.painting.fig.h)
-            
-            #~ code = "im = im.crop((%s, %s, %s, %s))" %(x, y, x+w, y+h)
             code = "$i = $i.copy(%s, %s, %s, %s)" %(x, y, w, h)
             desc = """x = %s y = %s 
 w = %s h = %s""" %(x, y, w, h)

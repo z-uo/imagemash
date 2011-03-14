@@ -25,10 +25,23 @@ from PyQt4 import QtCore
 class Viewer(QtGui.QScrollArea):
     """ Class doc """
     
+    zoomOut = QtCore.pyqtSignal()
+    zoomIn = QtCore.pyqtSignal()
     def __init__ (self, parent=None):
         QtGui.QScrollArea.__init__(self, parent)
         self.parent = parent
         self.setAlignment(QtCore.Qt.AlignCenter)
+        self.wheelEvent = self.wheel
+        
+    def wheel(self, event):
+        if event.delta() > 0:
+            self.zoomIn.emit()
+        elif event.delta() < 0:
+            self.zoomOut.emit()
+    
+    def zoom(self, n):
+        self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() * n)
+        self.verticalScrollBar().setValue(self.verticalScrollBar().value() * n)
         
     def event(self, event):
         # clic millieu: on memorise l'endroit pour le drag
@@ -93,9 +106,12 @@ class Painting(QtGui.QWidget):
                 p.drawPath(i[1])
         p.end()
         self.update()
-                
-    def zoom(self, n):
-        self.zoomN = n
+            
+    def zoom(self, n=1):
+        if n == 0:
+            self.zoomN = 1
+        else:
+            self.zoomN = self.zoomN * n
         self.zImH = self.imH * self.zoomN
         self.zImW = self.imW * self.zoomN
         self.imOriZoomed = self.imOri.scaled(self.zImW, self.zImH)
@@ -122,4 +138,4 @@ class Painting(QtGui.QWidget):
         exec code
         self.imH = self.imOri.height()
         self.imW = self.imOri.width()
-        self.zoom(self.zoomN)
+        self.zoom()
