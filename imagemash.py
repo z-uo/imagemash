@@ -28,6 +28,26 @@ from PyQt4 import QtCore
 
 from subclass import *
 
+def return_new_filename(orifn, fn, incr=1):
+    """ renvoi les nom de fichier
+        remplace %F par le nom de base du fichier original
+        remplace %E par l'extention du fichier original
+        remplace %III par une incrémentation """
+    base = os.path.splitext(orifn) [0]
+    ext = os.path.splitext(orifn) [1]
+    fn = fn.replace('%F', base)
+    fn = fn.replace('%E', ext)
+    rechaine = ''
+    for i in xrange(1, 10):
+        pattern = '%I{' + str(i) + '}'
+        if re.search(pattern, fn):
+            nbincr = i
+            rechaine = '%'
+    if rechaine:
+        for i in range(nbincr):
+            rechaine = rechaine + 'I'
+        fn = fn.replace(rechaine, string.zfill(incr, nbincr))
+    return fn
 
 class ImgTab(QtGui.QWidget):
     """ Classe ou sont gérées les images à traiter
@@ -143,7 +163,7 @@ class ImgTab(QtGui.QWidget):
     def create_thumbnail(self, chemin="alpha"):
         """ renvoi ou cré une miniature de l'image
             les miniatures sont enregistrées dans self.dicoImg """
-        if self.dicoImg in chemin:
+        if chemin in self.dicoImg:
             return self.dicoImg[chemin]
         else:
             if chemin == "alpha":
@@ -156,7 +176,7 @@ class ImgTab(QtGui.QWidget):
             
     def delete_thumbnail(self, image):
         """ suprime la miniature de l'image du dictionnaire """
-        if self.dicoImg in image:
+        if image in self.dicoImg:
             del self.dicoImg[image]
             
 
@@ -335,7 +355,7 @@ class SaveTab(QtGui.QWidget):
         fileGrid.addWidget(self.oriFilename, 1, 2)
         fileGrid.addWidget(self.newFilename, 2, 2)
         fileGrid.addWidget(self.docLabel, 3, 1)
-        fileGrid.addWidget(self.codeEditButton, 4, 0)
+        fileGrid.addWidget(self.codeEditButton, 4, 1)
         
         okBox = QtGui.QHBoxLayout()
         okBox.addStretch(0)
@@ -361,29 +381,8 @@ class SaveTab(QtGui.QWidget):
     def filename_changed(self):
         """ change le label du nom de fichier en fonction des modifications """
         fn = str(self.filenameEdit.text())
-        fn = self.return_new_filename(self.oriFn, fn)
+        fn = return_new_filename(self.oriFn, fn)
         self.newFilename.setText(fn)
-        
-    def return_new_filename(self, orifn, fn, incr=1):
-        """ renvoi les nom de fichier
-            remplace %F par le nom de base du fichier original
-            remplace %E par l'extention du fichier original
-            remplace %III par une incrémentation """
-        base = os.path.splitext(orifn) [0]
-        ext = os.path.splitext(orifn) [1]
-        fn = fn.replace('%F', base)
-        fn = fn.replace('%E', ext)
-        rechaine = ''
-        for i in xrange(1, 10):
-            pattern = '%I{' + str(i) + '}'
-            if re.search(pattern, fn):
-                nbincr = i
-                rechaine = '%'
-        if rechaine:
-            for i in range(nbincr):
-                rechaine = rechaine + 'I'
-            fn = fn.replace(rechaine, string.zfill(incr, nbincr))
-        return fn
         
     def edit_code(self):
         """ ouvre une boite de dialogue pour voir et éditer
@@ -391,28 +390,143 @@ class SaveTab(QtGui.QWidget):
         ok, self.code = TextEditDialog(self, self.code).getReturn()
 
     def apply_clicked(self):
-        """ applique le tout """
-        rep = str(self.dossier)
-        if not os.path.isdir(rep):
-            os.mkdir(rep)
-        images = self.imgs
-        print images
-        n = 0
-        for i in images:
-            self.infoLabel.setText(i)
-            n = n+1
-            fn = self.return_new_filename(os.path.split(i)[1], 
-                                          str(self.filenameEdit.text()), n)
-            fn = os.path.join(rep, fn)
-            print fn
-            im = QtGui.QImage()
-            im.load(i)
-            code = self.code.replace("$i", "im")
-            exec code
-            ok = im.save(fn)
-            print ok
-        self.infoLabel.setText("toutes les images ont été traitées ou pas")
+        fn = str(self.filenameEdit.text())
+        ApplyDialog(self.dossier, fn, self.code, self.imgs, self)
+
+class ApplyDialog(QtGui.QDialog):
+    def __init__(self, rep, fn, code, images, parent=None):
+        super(ApplyDialog, self).__init__(parent)
+        self.parent = parent
+        self.quit = False
+        self.fin = False
         
+        ### progress bar
+        self.barre = QtGui.QProgressBar(self)
+        self.barre.setRange(0, len(images))
+        self.barre.setValue(0)
+
+        ### stop ###
+        self.stopW = QtGui.QPushButton('stop', self)
+        self.stopW.clicked.connect(self.stopClicked)
+        ### quit ###
+        self.quitW = QtGui.QPushButton('quit', self)
+        self.quitW.clicked.connect(self.quitClicked)
+        
+        ### text edit ###
+        self.errorW = QtGui.QTextEdit()
+        self.errorW.setReadOnly(True)
+        
+        ### thread ###
+        self.applyThread = Apply(rep, fn, code, images)
+        self.applyThread.infoBatch.connect(self.infoBatch)
+        self.applyThread.finBatch.connect(self.finBatch)
+        self.applyThread.start()
+        
+        ### layout ###
+        toolBox = QtGui.QHBoxLayout()
+        toolBox.addStretch(0)
+        toolBox.addWidget(self.stopW)
+        toolBox.addWidget(self.quitW)
+        vBox = QtGui.QVBoxLayout()
+        vBox.addWidget(self.barre)
+        vBox.addWidget(self.errorW)
+        vBox.addLayout(toolBox)
+        self.setLayout(vBox)
+        self.exec_()
+        
+    def stopClicked(self):
+        self.applyThread.stop = True
+        self.stopW.setDisabled(True)
+        
+    def infoBatch(self, info):
+        self.barre.setValue(info[0])
+        self.errorW.setText(info[1])
+        
+    def finBatch(self, truc):
+        if self.quit:
+            self.applyThread.quit()
+            self.accept()
+        else:
+            self.applyThread.quit()
+            self.fin = True
+            self.stopW.setDisabled(True)
+
+    def quitClicked(self):
+        if self.fin:
+            self.applyThread.quit()
+            self.accept()
+        else:
+            self.applyThread.stop = True
+            self.quit = True
+            
+    def closeEvent(self, event):
+        if self.fin:
+            self.applyThread.quit()
+            event.accept()
+        else:
+            self.applyThread.stop = True
+            self.quit = True
+            event.ignore()
+            
+class Apply(QtCore.QThread):
+    """ TODO: pouvoir stopper le thread a n'importe quel moment proprement
+    """
+    infoBatch = QtCore.pyqtSignal(tuple)
+    finBatch = QtCore.pyqtSignal(bool)
+    def __init__(self, rep, fn, code, images, parent=None):
+        super(Apply, self).__init__(parent)
+        self.rep = rep
+        self.fn = fn
+        self.code = code.replace("$i", "im")
+        self.images = images
+        self.error = ""
+        self.stop = False
+        
+    def run(self):
+        if not os.path.isdir(self.rep):
+            try:
+                os.mkdir(self.rep)
+            except:
+                self.error = "%sle repertoire(%s) n'as pas pu etre créé\n" %(self.error, rep)
+                self.infoBatch.emit((0, self.error))
+                return
+                
+        n = 0   
+        im = QtGui.QImage()
+        for i in self.images:
+            n = n + 1
+            ### ouverture de l'image ###
+            if not self.stop:
+                fn = return_new_filename(os.path.split(i)[1], self.fn, n)
+                fn = os.path.join(self.rep, fn)
+                if im.load(i):
+                    pass
+                else:
+                    self.error = "%simage illisible\n" %(self.error,)
+                    self.infoBatch.emit((n-1, self.error))
+                    continue
+            else: break
+                
+            ### execution du code ###
+            if not self.stop:
+                try:
+                    exec self.code
+                except:
+                    self.error = "%scode incorrect\n" %(self.error,)
+                    self.infoBatch.emit((n-1, self.error))
+                    continue
+            else: break
+            
+            ### enregistrement de l'image ###
+            if not self.stop:
+                if im.save(fn):
+                    self.error = "%s%s\n" %(self.error, i)
+                    self.infoBatch.emit((n, self.error))
+                else:
+                    self.error = "%sl'image ne peut pas etre enregistree\n" %(self.error,)
+                    self.infoBatch.emit((n-1, self.error))
+            else: break
+        self.finBatch.emit(True)
         
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
