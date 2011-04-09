@@ -17,16 +17,16 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import division
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 
 class Viewer(QtGui.QScrollArea):
     """ Class doc """
-    
     zoomOut = QtCore.pyqtSignal()
     zoomIn = QtCore.pyqtSignal()
+    
     def __init__ (self, parent=None):
         QtGui.QScrollArea.__init__(self, parent)
         self.parent = parent
@@ -34,16 +34,19 @@ class Viewer(QtGui.QScrollArea):
         self.wheelEvent = self.wheel
         
     def wheel(self, event):
+        """ send a zoom in or out signal """
         if event.delta() > 0:
             self.zoomIn.emit()
         elif event.delta() < 0:
             self.zoomOut.emit()
     
+    # bof
     def zoom(self, n):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() * n)
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() * n)
         
     def event(self, event):
+        """ capture middle mouse event to move the view """
         # clic millieu: on memorise l'endroit pour le drag
         if (event.type()==QtCore.QEvent.MouseButtonPress) and (event.button()==QtCore.Qt.MidButton):
             self.mouseX = event.x()
@@ -59,27 +62,31 @@ class Viewer(QtGui.QScrollArea):
             self.mouseY = event.y()
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - diffY)
             return True
-        return QtGui.QScrollArea.event(self, event)  
+        return QtGui.QScrollArea.event(self, event)
+
 
 class Painting(QtGui.QWidget):
-    """ prévisualisation de l'image et interaction avec la souris
+    """ preview of the image and interation with the mouse
     """
-    def __init__(self, parent=None, args=None):
+    clicSignal = QtCore.pyqtSignal(tuple) # x, y, zoom
+    moveSignal = QtCore.pyqtSignal(tuple) # x, y, zoom
+    
+    def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
         
-        self.color = QtGui.QColor()
-        self.color.setNamedColor("#000000")
+        self.isFig = False
         
         self.zoomN = 1
         self.imOri = QtGui.QImage()
         
-    def clic(self, event):
-        self.fig.clic(event.x(), event.y(), self.zoomN)
-
-    def move(self, event):
-        self.fig.move(event.x(), event.y(), self.zoomN)
-        self.draw()
+    def set_fig(self, fig, color=QtGui.QColor(0, 0, 0)):
+        """ set a figure to draw on the image
+        """
+        self.fig = fig
+        self.isFig = True
+        self.color = color
+        self.fig.rectChanged.connect(self.draw)
         
     def paintEvent(self, ev):
         p = QtGui.QPainter()
@@ -88,22 +95,25 @@ class Painting(QtGui.QWidget):
         p.end()
             
     def draw(self):
+        """ draw the image and the figure if any
+        """
         p = QtGui.QPainter()
         p.begin(self.imQPainter)
         p.drawImage(QtCore.QPoint(0, 0), self.imOriZoomed)
-        for i in self.fig.toDraw(self.zoomN, self.zImW, self.zImH):
-            if i[0] == "cadre":
-                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
-                alpha = self.color
-                alpha.setAlpha(100)
-                p.setBrush(alpha)
-                p.drawPath(i[1])
-            if i[0] == "ligne":
-                p.drawPath(i[1])
-            if i[0] == "poignee":
-                p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
-                p.setBrush(QtGui.QColor(255, 255, 255, 255))
-                p.drawPath(i[1])
+        if self.isFig:
+            for i in self.fig.to_draw(self.zoomN, self.zImW, self.zImH):
+                if i[0] == "cadre":
+                    p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
+                    alpha = self.color
+                    alpha.setAlpha(100)
+                    p.setBrush(alpha)
+                    p.drawPath(i[1])
+                if i[0] == "ligne":
+                    p.drawPath(i[1])
+                if i[0] == "poignee":
+                    p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
+                    p.setBrush(QtGui.QColor(255, 255, 255, 255))
+                    p.drawPath(i[1])
         p.end()
         self.update()
             
@@ -118,24 +128,26 @@ class Painting(QtGui.QWidget):
         self.imQPainter = self.imOri.scaled(self.zImW, self.zImH)
         self.setFixedSize(self.zImW, self.zImH)
         self.draw()
-        
-    def erase(self):
-        self.fig.exist = False
-        self.draw()
                 
-    def event(self, event):
-        if (event.type()==QtCore.QEvent.MouseButtonPress) and (event.button()==QtCore.Qt.LeftButton):
-            self.clic(event)
-            return True
-        elif (event.type()==QtCore.QEvent.MouseMove) and (event.buttons()==QtCore.Qt.LeftButton):
-            self.move(event)
-            return True
-        return QtGui.QWidget.event(self, event)
-        
-    def changeImage(self, image, code=""):
+    def change_image(self, image, code=""):
         self.imOri.load(image)
         code = code.replace("$i", "self.imOri")
         exec code
         self.imH = self.imOri.height()
         self.imW = self.imOri.width()
         self.zoom()
+
+    def event(self, event):
+        ### clic ###
+        if   (event.type() == QtCore.QEvent.MouseButtonPress and 
+              event.button() == QtCore.Qt.LeftButton):
+            self.clicSignal.emit((event.x(), event.y(), self.zoomN))
+            return True
+        ### move ###
+        elif (event.type() == QtCore.QEvent.MouseMove and 
+              event.buttons() == QtCore.Qt.LeftButton):
+            self.moveSignal.emit((event.x(), event.y(), self.zoomN))
+            self.draw()
+            return True
+        return QtGui.QWidget.event(self, event)
+        
