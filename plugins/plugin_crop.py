@@ -21,8 +21,7 @@
 # TODO: scrollbar qui suit le zoom
 # TODO: s'arreter aux bord de l'image
 # TODO: conserver ratio lineEdit w/h
-# TODO: pb tuple args
-# TODO: args zoom
+# TODO: pb args
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qt
@@ -44,7 +43,7 @@ EXEC_CLASS = "CropDialog"#(images, args)
         
 ########################################################################
 class CropDialog(QtGui.QDialog):
-    def __init__(self, images, args=(None,None), code="", parent=None):
+    def __init__(self, images, args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
         self.codeBefore = code
@@ -62,9 +61,10 @@ class CropDialog(QtGui.QDialog):
         self.eraseW = QtGui.QToolButton(self)
         self.eraseW.setAutoRaise(True)
         self.eraseW.setIcon(QtGui.QIcon(QtGui.QPixmap('icons/black_eraser.svg')))
+        
         ### couleur ###
-        if args and args[0]:
-            self.color = args[0][3]
+        if args:
+            self.color = args[4]
         else:
             self.color = QtGui.QColor(0, 0, 0)
         self.colorIcon = QtGui.QPixmap(22, 22)
@@ -116,8 +116,8 @@ class CropDialog(QtGui.QDialog):
         
         ### viewer ###
         self.painting = Painting(self)
-        if args and args[0]:
-            self.painting.set_fig(Rect(self.painting, args[1]), self.color)
+        if args:
+            self.painting.set_fig(Rect(self.painting, args[5]), self.color)
         else:
             self.painting.set_fig(Rect(self.painting, args), self.color)
         self.viewer = Viewer(self)
@@ -130,13 +130,6 @@ class CropDialog(QtGui.QDialog):
         ### function ###################################################
         self.im_changed(self.images[0])
         self.rect_changed()
-        if args and args[0]:
-            self.actionW.setCurrentIndex(args[0][0])
-            self.wW.setText(str(args[0][1]))
-            self.hW.setText(str(args[0][2]))
-        else:
-            self.wW.setText(str(self.painting.imW))
-            self.hW.setText(str(self.painting.imH))
         
         ### connexion ##################################################
         self.imW.activated[str].connect(self.im_changed)
@@ -158,6 +151,16 @@ class CropDialog(QtGui.QDialog):
         self.viewer.zoomOut.connect(self.zoom_out)
         self.zoomOneW.clicked.connect(self.zoom_one)
         
+        ### args #######################################################
+        if args:
+            self.wW.setText(str(args[1]))
+            self.hW.setText(str(args[2]))
+            self.actionW.setCurrentIndex(int(args[0]))
+            self.painting.zoom(args[3])
+        else:
+            self.wW.setText(str(self.painting.imW))
+            self.hW.setText(str(self.painting.imH))
+
         ### layout #####################################################
         toolBox = QtGui.QHBoxLayout()
         toolBox.addWidget(self.zoomInW)
@@ -267,20 +270,24 @@ class CropDialog(QtGui.QDialog):
 w = %s h = %s""" %(x, y, w, h)
 
                 if self.actionW.currentIndex() == 2: #keep aspect ratio and resize
-                    outW = self.painting.outW
-                    outH = self.painting.outH
+                    outW = self.painting.fig.outW
+                    outH = self.painting.fig.outH
                     code = """%s
 $i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)""" %(code, outW, outH)
                     desc = """%s
 resized to:
 w = %s h = %s""" %(desc, outW, outH)
-
+            else:
+                code = ""
+                desc = ""
             # (windows args), (fig args)
-            args = ((self.actionW.currentIndex(),
+            # (action, w, h, color, x, y, w, h, zoom)
+            args = (self.actionW.currentIndex(),
                      self.wW.text().toInt()[0], 
                      self.hW.text().toInt()[0], 
-                     self.color), 
-                    (x, y, w, h))
+                     self.painting.zoomN, 
+                     self.color, 
+                     (x, y, w, h))
             return True , code, desc, args
         else:
             return False, None, None, None

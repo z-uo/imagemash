@@ -116,7 +116,7 @@ class Painting(QtGui.QWidget):
                     p.drawPath(i[1])
         p.end()
         self.update()
-            
+        
     def zoom(self, n=1):
         if n == 0:
             self.zoomN = 1
