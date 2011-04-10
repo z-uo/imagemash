@@ -27,6 +27,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 from subclass import *
+import preview
 
 def return_new_filename(orifn, fn, incr=1):
     """ renvoi les nom de fichier
@@ -48,6 +49,7 @@ def return_new_filename(orifn, fn, incr=1):
             rechaine = rechaine + 'I'
         fn = fn.replace(rechaine, string.zfill(incr, nbincr))
     return fn
+
 
 class ImgTab(QtGui.QWidget):
     """ Classe ou sont gérées les images à traiter
@@ -211,6 +213,10 @@ class ActionTab(QtGui.QWidget):
         self.actionList.selectionModel().selectionChanged.connect(self.sel_action)
         self.actionList.doubleClicked.connect(self.edit_action)
         
+        ### preview ###
+        self.previewW = QtGui.QPushButton("preview")
+        self.previewW.clicked.connect(self.preview)
+        
         ### description action ###
         self.labelDesc = QtGui.QLabel("description:                 ")
         self.labelPluginDesc = QtGui.QLabel("")
@@ -221,18 +227,25 @@ class ActionTab(QtGui.QWidget):
         toolBox.addWidget(self.actionAdd)
         toolBox.addWidget(self.actionRemove)
         toolBox.addStretch(0)
+        
         descBox = QtGui.QVBoxLayout()
-        descBox.addWidget(self.labelDesc)
         descBox.addWidget(self.labelPluginDesc)
         descBox.addWidget(self.labelActionDesc)
         descBox.addStretch(0)
+        
         layout = QtGui.QGridLayout(self)
+        layout.setColumnMinimumWidth(4, 200)
         layout.addWidget(self.actionAvailableListLabel, 1, 1)
-        layout.addWidget(self.actionAvailableList, 2, 1)
-        layout.addLayout(toolBox, 2, 2)
+        layout.addWidget(self.actionAvailableList, 2, 1, 2, 1)
+        
+        layout.addLayout(toolBox, 2, 2, 2, 1)
+        
         layout.addWidget(self.actionListLabel, 1, 3)
         layout.addWidget(self.actionList, 2, 3)
-        layout.addLayout(descBox, 2, 4)
+        layout.addWidget(self.previewW, 3, 3)
+        
+        layout.addWidget(self.labelDesc, 1, 4)
+        layout.addLayout(descBox, 2, 4, 2, 1)
             
     def import_plugins(self):
         """ insere les plugin importé au lancement de l'aplication 
@@ -300,7 +313,11 @@ class ActionTab(QtGui.QWidget):
 %s""" %(code, self.modActionList.item(i).getCode())
         return code
         
-        
+    def preview(self):
+        ok = preview.PrevDialog(self.parent.imgTab.return_imgs(), 
+                                self.return_code(), self)
+
+
 class SaveTab(QtGui.QWidget):
     """classe ou est gérée l'enregistrement des images"""
     def __init__(self, parent=None, dossier=None):
@@ -393,6 +410,7 @@ class SaveTab(QtGui.QWidget):
         fn = str(self.filenameEdit.text())
         ApplyDialog(self.dossier, fn, self.code, self.imgs, self)
 
+
 class ApplyDialog(QtGui.QDialog):
     def __init__(self, rep, fn, code, images, parent=None):
         super(ApplyDialog, self).__init__(parent)
@@ -467,7 +485,8 @@ class ApplyDialog(QtGui.QDialog):
             self.applyThread.stop = True
             self.quit = True
             event.ignore()
-            
+
+
 class Apply(QtCore.QThread):
     """ TODO: pouvoir stopper le thread a n'importe quel moment proprement
     """
@@ -527,11 +546,13 @@ class Apply(QtCore.QThread):
                     self.infoBatch.emit((n-1, self.error))
             else: break
         self.finBatch.emit(True)
-        
+
+
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
     def __init__(self, images, dossier, parent=None):
         QtGui.QDialog.__init__(self, parent)
+        self.setWindowTitle("imagemash")
         
         self.imgTab = ImgTab(self, images)
         self.actionTab = ActionTab(self)

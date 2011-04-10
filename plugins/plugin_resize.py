@@ -32,12 +32,13 @@ MOD_NAME = "plugin_resize"
 DESCRIPTION = "redimmensionne les images"
 AUTHOR = "pops"
 VERSION = 0.1
-EXEC_CLASS = "ResizeDialog"#(images, args)
+EXEC_CLASS = "ResizeDialog"#(images, args, code, parent)
 
 class ResizeDialog(QtGui.QDialog):
     def __init__(self, images=[], args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
+        self.setWindowTitle("resize")
         self.codeBefore = code
         
         ### liste des images ###

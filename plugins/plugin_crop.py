@@ -45,6 +45,7 @@ EXEC_CLASS = "CropDialog"#(images, args)
 class CropDialog(QtGui.QDialog):
     def __init__(self, images, args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
+        self.setWindowTitle("crop")
         self.parent = parent
         self.codeBefore = code
         
