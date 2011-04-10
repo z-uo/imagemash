@@ -1,0 +1,8 @@
+#!/bin/bash
+
+#xterm -hold -e "python -3 /mnt/doc/prog/cropwidget/crop-0.08/mainwindow.py %F"
+quoted=$(echo -e "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" | awk 'BEGIN {
+FS = "\n" } { printf "\"%s\" ", $1 }' | sed -e s#\"\"##)
+#eval "your-program $quoted"
+
+xterm -hold -e "python /home/pops/imagemash/imagemash.py $quoted"
