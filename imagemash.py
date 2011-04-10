@@ -25,9 +25,12 @@ import re
 import string
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+## traduction
+import gettext
 
 from subclass import *
 import preview
+
 
 def return_new_filename(orifn, fn, incr=1):
     """ renvoi les nom de fichier
@@ -57,7 +60,7 @@ class ImgTab(QtGui.QWidget):
     def __init__(self, parent=None, images=[]):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
-        self.title = QtCore.QCoreApplication.translate("ImgTab", "images")
+        self.title = _("images")
         
         ### modele ou sont enregistré les images ###
         self.modImgList = QtGui.QStandardItemModel(0, 1)
@@ -73,17 +76,14 @@ class ImgTab(QtGui.QWidget):
         ### Apercu d'une image ###
         self.dicoImg = {}
         self.apercu = QtGui.QLabel()
-        self.checkApercu = QtGui.QCheckBox(
-                QtCore.QCoreApplication.translate("ImgTab", "preview"))
+        self.checkApercu = QtGui.QCheckBox(_("preview"))
         self.checkApercu.clicked.connect(self.check_apercu)
         self.insert_thumbnail()
         
         ### ajout et supression d'images ###
-        self.imgAdd = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ImgTab", "add"))
+        self.imgAdd = QtGui.QPushButton(_("add"))
         self.imgAdd.clicked.connect(self.add_images_clicked)
-        self.imgRemove = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ImgTab", "remove"))
+        self.imgRemove = QtGui.QPushButton(_("remove"))
         self.imgRemove.clicked.connect(self.remove_images_clicked)
         
         ### layout ###
@@ -101,13 +101,10 @@ class ImgTab(QtGui.QWidget):
     
     def add_images_clicked(self):
         """ boite de dialogue d'ajout d'images """
-        url = QtGui.QFileDialog.getOpenFileNames(self,
-                QtCore.QCoreApplication.translate("ImgTab", "add images"), 
-                "", 
-                QtCore.QCoreApplication.translate("ImgTab", 
-                """Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif 
-                           *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)
-                           ;;Tous les fichiers (*)"""))
+        url = QtGui.QFileDialog.getOpenFileNames(self,_("add images"), 
+                "", _("""Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif 
+                                 *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)
+                                 ;;All files (*)"""))
         self.add_images(url)
             
     def remove_images_clicked(self):
@@ -122,7 +119,7 @@ class ImgTab(QtGui.QWidget):
         """ ajoute une image au modele """
         li = []
         for i in url:
-            li.append(unicode(str(i)))
+            li.append(str(i))
         img = self.verif_images(li)
         for i in img:
             self.modImgList.appendRow(Item(i))
@@ -192,12 +189,11 @@ class ActionTab(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
-        self.title = QtCore.QCoreApplication.translate("ActionTab", "actions")
+        self.title = _("actions")
         self.imgs = self.parent.imgTab.return_imgs()
         
         ### action disponibles ###
-        self.actionAvailableListLabel = QtGui.QLabel(
-                QtCore.QCoreApplication.translate("ActionTab", "available actions"))
+        self.actionAvailableListLabel = QtGui.QLabel(_("available actions"))
         self.modActionAvailableList = QtGui.QStandardItemModel(0, 1)
         self.import_plugins()
         
@@ -206,16 +202,13 @@ class ActionTab(QtGui.QWidget):
         self.actionAvailableList.doubleClicked.connect(self.add_action)
         
         ### ajout et supression d'actions ###
-        self.actionAdd = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ActionTab", "add"))
+        self.actionAdd = QtGui.QPushButton(_("add"))
         self.actionAdd.clicked.connect(self.add_action)
-        self.actionRemove = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ActionTab", "remove"))
+        self.actionRemove = QtGui.QPushButton(_("remove"))
         self.actionRemove.clicked.connect(self.remove_action)
         
         ### action ###
-        self.actionListLabel = QtGui.QLabel(
-                QtCore.QCoreApplication.translate("ActionTab", "actions"))
+        self.actionListLabel = QtGui.QLabel(_("actions"))
         self.modActionList = QtGui.QStandardItemModel(0, 1)
         self.actionList = QtGui.QListView()
         self.actionList.setModel(self.modActionList)
@@ -223,13 +216,11 @@ class ActionTab(QtGui.QWidget):
         self.actionList.doubleClicked.connect(self.edit_action)
         
         ### preview ###
-        self.previewW = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ActionTab", "preview"))
+        self.previewW = QtGui.QPushButton(_("preview"))
         self.previewW.clicked.connect(self.preview)
         
         ### description action ###
-        self.labelDesc = QtGui.QLabel(
-                QtCore.QCoreApplication.translate("ActionTab", "description"))
+        self.labelDesc = QtGui.QLabel(_("description"))
         self.labelPluginDesc = QtGui.QLabel("")
         self.labelActionDesc = QtGui.QLabel("")
         
@@ -334,25 +325,22 @@ class SaveTab(QtGui.QWidget):
     def __init__(self, parent=None, dossier=None):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
-        self.title = QtCore.QCoreApplication.translate("SaveTab", "save")
+        self.title = _("save")
         self.imgs = self.parent.imgTab.return_imgs()
         self.code = self.parent.actionTab.return_code()
         
         ### dossier d'enregistrement ###
         self.dossier = dossier
-        self.dossierLabel = QtGui.QLabel(
-                QtCore.QCoreApplication.translate("SaveTab", "new dir"))
+        self.dossierLabel = QtGui.QLabel(_("new dir"))
         self.dossierEdit = QtGui.QLineEdit(self)
         self.dossierEdit.setText(self.dossier)
         self.dossierEdit.textChanged[str].connect(self.dir_changed)
-        self.dossierChooser = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("SaveTab", "choose"))
+        self.dossierChooser = QtGui.QPushButton(_("choose"))
         self.dossierChooser.clicked.connect(self.change_dir)
 
         ### nom de fichier ###
         self.oriFn = os.path.split(self.imgs[1]) [1]
-        self.filenameLabel = QtGui.QLabel(
-                QtCore.QCoreApplication.translate("SaveTab", "filenames"))
+        self.filenameLabel = QtGui.QLabel(_("filenames"))
         self.filenameEdit = QtGui.QLineEdit(self)
         self.filenameEdit.setText("%F%E")
         self.filenameEdit.textChanged[str].connect(self.filename_changed)
@@ -360,20 +348,17 @@ class SaveTab(QtGui.QWidget):
         self.newFilename = QtGui.QLabel(self.oriFn)
         
         ### doc nom de fichier ###
-        self.doc = QtCore.QCoreApplication.translate("SaveTab", 
-"""%F : original file name
+        self.doc = _( """%F : original file name
 %E : original extension
 %I : increment (10 digits)""")
         self.docLabel = QtGui.QLabel(self.doc)
         
         ### code ###
-        self.codeEditButton = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("SaveTab", "code"))
+        self.codeEditButton = QtGui.QPushButton(_("code"))
         self.codeEditButton.clicked.connect(self.edit_code)
 
         ### appliquer ###
-        self.applyW = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("SaveTab", "apply"))
+        self.applyW = QtGui.QPushButton(_("apply"))
         self.applyW.clicked.connect(self.apply_clicked)
 
         ### info ###
@@ -408,8 +393,7 @@ class SaveTab(QtGui.QWidget):
     def change_dir(self):
         """ boite de dialogue changement dossier enregistrement """
         url = QtGui.QFileDialog.getExistingDirectory(self, 
-                QtCore.QCoreApplication.translate("SaveTab", "Select the backup folder"), 
-                self.dossier)
+                    _("Select the backup folder"), self.dossier)
         if url:
             self.dossierEdit.setText(url)
             
@@ -442,14 +426,10 @@ class ApplyDialog(QtGui.QDialog):
         self.barre.setValue(0)
 
         ### stop ###
-        self.stopW = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ApplyDialog", "stop"), 
-                self)
+        self.stopW = QtGui.QPushButton(_("stop"), self)
         self.stopW.clicked.connect(self.stopClicked)
         ### quit ###
-        self.quitW = QtGui.QPushButton(
-                QtCore.QCoreApplication.translate("ApplyDialog", "quit"), 
-                self)
+        self.quitW = QtGui.QPushButton(_("quit"), self)
         self.quitW.clicked.connect(self.quitClicked)
         
         ### text edit ###
@@ -574,8 +554,7 @@ class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
     def __init__(self, images, dossier, parent=None):
         QtGui.QDialog.__init__(self, parent)
-        self.setWindowTitle(
-                QtCore.QCoreApplication.translate("MainDialog", "imagemash"))
+        self.setWindowTitle(_("imagemash"))
         
         self.imgTab = ImgTab(self, images)
         self.actionTab = ActionTab(self)
@@ -626,15 +605,13 @@ if __name__=="__main__":
     for i in pluginFiles:
         importedModules.append(__import__(i))
         exec("%s = sys.modules[i]"%(i,))
-    ## traduction
-    locale = QtCore.QLocale.system().name()
-    qtTranslator = QtCore.QTranslator()
-    if qtTranslator.load("qt_" + locale):
-        app.installTranslator(qtTranslator)
-    appTranslator = QtCore.QTranslator()
-    if appTranslator.load("reStInPeace_" + locale):
-        app.installTranslator(appTranslator)
-
+    
+    ### traduction #####################################################
+    import gettext
+    gettext.install("imagemash", "./locale/fr", unicode=True)
+    presLan_fr = gettext.translation("imagemash", "./locale", languages=['fr'])
+    presLan_fr.install()
+    
     ### demarage de l'interface ########################################
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
