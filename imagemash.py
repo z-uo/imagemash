@@ -18,6 +18,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO: self.oriFn ne se met pas a jour
+
 import sys
 import os
 import imp
@@ -339,13 +341,14 @@ class SaveTab(QtGui.QWidget):
         self.dossierChooser.clicked.connect(self.change_dir)
 
         ### nom de fichier ###
-        self.oriFn = os.path.split(self.imgs[1]) [1]
         self.filenameLabel = QtGui.QLabel(_("filenames"))
         self.filenameEdit = QtGui.QLineEdit(self)
         self.filenameEdit.setText("%F%E")
         self.filenameEdit.textChanged[str].connect(self.filename_changed)
-        self.oriFilename = QtGui.QLabel(self.oriFn)
-        self.newFilename = QtGui.QLabel(self.oriFn)
+        self.oriFilename = QtGui.QLabel()
+        self.newFilename = QtGui.QLabel()
+        self.tab_enter()
+        self.parent.save_enter.connect(self.tab_enter)
         
         ### doc nom de fichier ###
         self.doc = _( """%F : original file name
@@ -385,6 +388,14 @@ class SaveTab(QtGui.QWidget):
         layout.addLayout(fileGrid)
         layout.addStretch(0)
         layout.addLayout(okBox)
+        
+    def tab_enter (self):
+        if len(self.imgs) > 0:
+            self.oriFn = os.path.split(self.imgs[0]) [1]
+        else:
+            self.oriFn = ""
+        self.oriFilename.setText(self.oriFn)
+        self.filename_changed()
         
     def dir_changed(self):
         """ modification du dossier d'enregistrement """
@@ -516,42 +527,51 @@ class Apply(QtCore.QThread):
         im = QtGui.QImage()
         for i in self.images:
             n = n + 1
-            ### ouverture de l'image ###
-            if not self.stop:
-                fn = return_new_filename(os.path.split(i)[1], self.fn, n)
-                fn = os.path.join(self.rep, fn)
-                if im.load(i):
-                    pass
-                else:
-                    self.error = "%simage illisible\n" %(self.error,)
-                    self.infoBatch.emit((n-1, self.error))
-                    continue
-            else: break
+            fn = return_new_filename(os.path.split(i)[1], self.fn, n)
+            fn = os.path.join(self.rep, fn)
+            # verifie que le fichier n'existe pas déja
+            # a modifier pour permettre d'ecraser les fichiers
+            if os.path.isfile(fn):
+                self.error = "%sle fichier (%s) existe deja\n" %(self.error, fn)
+                self.infoBatch.emit((n, self.error))
+            else:
+                ### ouverture de l'image ###
+                if not self.stop:
+                    if im.load(i):
+                        pass
+                    else:
+                        self.error = "%simage illisible\n" %(self.error,)
+                        self.infoBatch.emit((n-1, self.error))
+                        continue
+                else: break
+                    
+                ### execution du code ###
+                if not self.stop:
+                    try:
+                        exec self.code
+                    except:
+                        self.error = "%scode incorrect\n" %(self.error,)
+                        self.infoBatch.emit((n-1, self.error))
+                        continue
+                else: break
                 
-            ### execution du code ###
-            if not self.stop:
-                try:
-                    exec self.code
-                except:
-                    self.error = "%scode incorrect\n" %(self.error,)
-                    self.infoBatch.emit((n-1, self.error))
-                    continue
-            else: break
-            
-            ### enregistrement de l'image ###
-            if not self.stop:
-                if im.save(fn):
-                    self.error = "%s%s\n" %(self.error, i)
-                    self.infoBatch.emit((n, self.error))
-                else:
-                    self.error = "%sl'image ne peut pas etre enregistree\n" %(self.error,)
-                    self.infoBatch.emit((n-1, self.error))
-            else: break
+                ### enregistrement de l'image ###
+                if not self.stop:
+                    if im.save(fn):
+                        self.error = "%s%s\n" %(self.error, i)
+                        self.infoBatch.emit((n, self.error))
+                    else:
+                        self.error = "%sl'image ne peut pas etre enregistree\n" %(self.error,)
+                        self.infoBatch.emit((n-1, self.error))
+                else: break
         self.finBatch.emit(True)
 
 
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
+    img_enter = QtCore.pyqtSignal()
+    action_enter = QtCore.pyqtSignal()
+    save_enter = QtCore.pyqtSignal()
     def __init__(self, images, dossier, parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle(_("imagemash"))
@@ -573,11 +593,15 @@ class MainDialog(QtGui.QDialog):
         
     def tab_changed(self, tab):
         """ envoi des données au onglets au moment de leur ouverture """
-        if tab == 1:
+        if tab == 0:
+            self.img_enter.emit()
+        elif tab == 1:
             self.actionTab.imgs = self.imgTab.return_imgs()
+            self.action_enter.emit()
         elif tab == 2:
             self.saveTab.imgs = self.imgTab.return_imgs()
             self.saveTab.code = self.actionTab.return_code()
+            self.save_enter.emit()
         
 
 if __name__=="__main__":
@@ -585,15 +609,17 @@ if __name__=="__main__":
     if len(sys.argv) == 1:
         sys.argv.append("/home/pops/prog/img")
     fichiers = []
-    if os.path.isdir(sys.argv[1]):
-        for i in os.listdir(sys.argv[1]):
-            fichiers.append(os.path.join(sys.argv[1], i))
-        dossier = sys.argv[1]
-    else:
-        for i in sys.argv[1:]:
-            if os.path.isfile(i):
-                fichiers.append(i)
-        dossier = os.path.dirname(sys.argv[1])
+    dossier = ""
+    if len(sys.argv) > 1:
+        if os.path.isdir(sys.argv[1]):
+            for i in os.listdir(sys.argv[1]):
+                fichiers.append(os.path.join(sys.argv[1], i))
+            dossier = sys.argv[1]
+        else:
+            for i in sys.argv[1:]:
+                if os.path.isfile(i):
+                    fichiers.append(i)
+            dossier = os.path.dirname(sys.argv[1])
     
     ### import des plugins #############################################
     pluginPath = os.path.join(os.path.dirname(imp.find_module("imagemash")[1]), "plugins/")
