@@ -28,7 +28,7 @@ class Rect(QtCore.QObject):
     """ classe représentant le rectangle défini pour recadrer l'image
         args = (x, y, w, h)
     """
-    rectChanged = QtCore.pyqtSignal()
+    figChanged = QtCore.pyqtSignal()
     def __init__ (self, parent=None, args=None):
         QtCore.QObject.__init__(self, parent)
         self.parent = parent
@@ -75,7 +75,7 @@ class Rect(QtCore.QObject):
         self.y = 0
         self.w = 0
         self.h = 0
-        self.rectChanged.emit()
+        self.figChanged.emit()
         
     def action_changed(self, index, w, h):
         if index == 0: #ignore aspect ratio
@@ -109,7 +109,7 @@ class Rect(QtCore.QObject):
                 self.h = h
         else:
             return False
-        self.rectChanged.emit()
+        self.figChanged.emit()
         return True
         
     def set_xywh(self, x, y, w, h):
@@ -119,7 +119,7 @@ class Rect(QtCore.QObject):
         self.h = h
         self.keep_ratio()
         self.exist = True
-        self.rectChanged.emit()
+        self.figChanged.emit()
         
     def alendroit(self):
         """ remet le rectangle à l'endroit si besoin
@@ -131,7 +131,7 @@ class Rect(QtCore.QObject):
             self.y = self.y + self.h
             self.h = -self.h
             
-    def clic(self, (mouseX, mouseY, zoom)):
+    def clic(self, mouseX, mouseY, zoom):
         """ fonction apelé au clic sur l'image
             recoit la position de la souris et le zoom
             defini l'action a effectuer et enregistre des variables temporaires
@@ -211,9 +211,9 @@ class Rect(QtCore.QObject):
             self.action = "scale"
             self.oppositeX = mouseX
             self.oppositeY = mouseY
-        self.rectChanged.emit()
+        self.figChanged.emit()
             
-    def move(self, (mouseX, mouseY, zoom)):
+    def move(self, mouseX, mouseY, zoom):
         """ fonction apelée par un clic mouvement sur l'image
             enregistre la position et taille du rectangle
             ou son déplacement
@@ -228,12 +228,12 @@ class Rect(QtCore.QObject):
             self.h = mouseY - self.oppositeY
             self.keep_ratio()
             self.alendroit()
-            self.rectChanged.emit()
+            self.figChanged.emit()
             
         elif self.action == "move":
             self.x = mouseX - self.diffX
             self.y = mouseY - self.diffY
-            self.rectChanged.emit()
+            self.figChanged.emit()
 
     def keep_ratio(self, side="w"):
         if self.keepRatio:

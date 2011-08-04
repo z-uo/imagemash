@@ -23,9 +23,9 @@ from PyQt4 import QtCore
 from PyQt4 import Qt
 import sys, os
 
-from plugins.plugsubclass import *
+from plugins.plugsubclass import Viewer
+from plugins.plugsubclass import Painting
 
-image = "/home/pops/prog/img/IMGP0333.JPG"
         
 ########################################################################
 class PrevDialog(QtGui.QDialog):
@@ -47,13 +47,16 @@ class PrevDialog(QtGui.QDialog):
         ### zoom buttons ###
         self.zoomInW = QtGui.QToolButton()
         self.zoomInW.setAutoRaise(True)
-        self.zoomInW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_in.svg")))
+        self.zoomInW.setIcon(QtGui.QIcon(
+                             QtGui.QPixmap("icons/black_zoom_in.svg")))
         self.zoomOutW = QtGui.QToolButton()
         self.zoomOutW.setAutoRaise(True)
-        self.zoomOutW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_out.svg")))
+        self.zoomOutW.setIcon(QtGui.QIcon(
+                              QtGui.QPixmap("icons/black_zoom_out.svg")))
         self.zoomOneW = QtGui.QToolButton()
         self.zoomOneW.setAutoRaise(True)
-        self.zoomOneW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_one.svg")))
+        self.zoomOneW.setIcon(QtGui.QIcon(
+                              QtGui.QPixmap("icons/black_zoom_one.svg")))
         
         ### viewer ###
         self.painting = Painting(self)
@@ -117,6 +120,7 @@ class PrevDialog(QtGui.QDialog):
         self.accept()
 
 if __name__=="__main__":
+    image = "test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
     win = PrevDialog([image])

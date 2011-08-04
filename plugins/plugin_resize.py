@@ -17,24 +17,19 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import division
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-#from PyQt4 import Qt
 import sys, os
 
-# TODO: gerer sans image
-image = "/home/pops/prog/img/IMGP0333.JPG"
 ### plugin infos #######################################################
 NAME = "redimmensionner"
 MOD_NAME = "plugin_resize"
 DESCRIPTION = "redimmensionne les images"
 AUTHOR = "pops"
 VERSION = 0.1
-EXEC_CLASS = "ResizeDialog"#(images, args, code, parent)
 
-class ResizeDialog(QtGui.QDialog):
+class ExecDialog(QtGui.QDialog):
     def __init__(self, images=[], args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
@@ -143,7 +138,7 @@ class ResizeDialog(QtGui.QDialog):
         if self.images:
             self.im.load(self.images[self.imW.currentIndex()])
             code = self.codeBefore.replace("$i", "self.im")
-            exec code
+            exec(code)
             self.oriWL.setText("%s"%(self.im.width(),))
             self.oriHL.setText("%s"%(self.im.height(),))
             if maj:
@@ -204,8 +199,8 @@ class ResizeDialog(QtGui.QDialog):
         
     def get_return(self):
         if self.result():
-            w = self.wW.text()
-            h = self.hW.text()
+            w = int(self.wW.text())
+            h = int(self.hW.text())
             ratio = str(self.ratioW.currentText())
             transform = "QtCore.Qt.SmoothTransformation"
             
@@ -241,8 +236,8 @@ h = %spx""" %(h,)
             return False, None, None, None
         
 if __name__=="__main__":
+    image = "media/donees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
-    win = ResizeDialog()
-    #~ win = ResizeDialog([image], (10, 10, "fit to height"))
+    win = ExecDialog()
     app.exec_()

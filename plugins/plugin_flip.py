@@ -18,10 +18,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
+# TODO: implementer args
+# ! EXECCLASS
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-#from PyQt4 import Qt
-import sys, os
 
 ### plugin infos #######################################################
 NAME = "flip / rotate"
@@ -29,9 +30,8 @@ MOD_NAME = "plugin_flip"
 DESCRIPTION = "flip / rotate"
 AUTHOR = "pops"
 VERSION = 0.1
-EXEC_CLASS = "FlipDialog"#(images, args, code, parent)
 
-class FlipDialog(QtGui.QDialog):
+class ExecDialog(QtGui.QDialog):
     def __init__(self, images=[], args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
@@ -49,9 +49,9 @@ class FlipDialog(QtGui.QDialog):
         self.rotateL = QtGui.QLabel("rotate")
         self.rotateW = QtGui.QComboBox(self)
         self.rotateW.addItem("no rotation")
-        self.rotateW.addItem(u"rotate by 90°")
-        self.rotateW.addItem(u"rotate by -90°")
-        self.rotateW.addItem(u"rotate 180°")
+        self.rotateW.addItem("rotate by 90°")
+        self.rotateW.addItem("rotate by -90°")
+        self.rotateW.addItem("rotate 180°")
         
         ### args ###
         if args:
@@ -114,21 +114,21 @@ no rotation""" %(desc)
 transform = QtGui.QTransform()
 transform.rotate(90)
 $i = $i.transformed(transform, QtCore.Qt.SmoothTransformation)""" %(code,)
-                desc = u"""%s
+                desc = """%s
 rotate by 90°""" %(desc)
             elif self.rotateW.currentIndex() == 2: # -90°
                 code = """%s
 transform = QtGui.QTransform()
 transform.rotate(-90)
 $i = $i.transformed(transform, QtCore.Qt.SmoothTransformation)""" %(code,)
-                desc = u"""%s
+                desc = """%s
 rotate by -90°""" %(desc)
             elif self.rotateW.currentIndex() == 3: # 180°
                 code = """%s
 transform = QtGui.QTransform()
 transform.rotate(180)
 $i = $i.transformed(transform, QtCore.Qt.SmoothTransformation)""" %(code,)
-                desc = u"""%s
+                desc = """%s
 rotate by 180°""" %(desc)
             
             args = (self.flipW.currentIndex(), self.rotateW.currentIndex())
@@ -137,7 +137,8 @@ rotate by 180°""" %(desc)
             return False, None, None, None
         
 if __name__=="__main__":
+    import sys, os
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
-    win = FlipDialog()
+    win = ExecDialog()
     app.exec_()

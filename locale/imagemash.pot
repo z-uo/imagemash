@@ -1,0 +1,104 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-04-10 22:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: imagemash.py:60
+msgid "images"
+msgstr ""
+
+#: imagemash.py:76 imagemash.py:216
+msgid "preview"
+msgstr ""
+
+#: imagemash.py:81 imagemash.py:202
+msgid "add"
+msgstr ""
+
+#: imagemash.py:83 imagemash.py:204
+msgid "remove"
+msgstr ""
+
+#: imagemash.py:101
+msgid "add images"
+msgstr ""
+
+#: imagemash.py:102
+msgid ""
+"Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif \n"
+"                                 *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)\n"
+"                                 ;;All files (*)"
+msgstr ""
+
+#: imagemash.py:189 imagemash.py:208
+msgid "actions"
+msgstr ""
+
+#: imagemash.py:193
+msgid "available actions"
+msgstr ""
+
+#: imagemash.py:220
+msgid "description"
+msgstr ""
+
+#: imagemash.py:325
+msgid "save"
+msgstr ""
+
+#: imagemash.py:331
+msgid "new dir"
+msgstr ""
+
+#: imagemash.py:335
+msgid "choose"
+msgstr ""
+
+#: imagemash.py:340
+msgid "filenames"
+msgstr ""
+
+#: imagemash.py:348
+msgid ""
+"%F : original file name\n"
+"%E : original extension\n"
+"%I : increment (10 digits)"
+msgstr ""
+
+#: imagemash.py:354
+msgid "code"
+msgstr ""
+
+#: imagemash.py:358
+msgid "apply"
+msgstr ""
+
+#: imagemash.py:393
+msgid "Select the backup folder"
+msgstr ""
+
+#: imagemash.py:426
+msgid "stop"
+msgstr ""
+
+#: imagemash.py:429
+msgid "quit"
+msgstr ""
+
+#: imagemash.py:554
+msgid "imagemash"
+msgstr ""

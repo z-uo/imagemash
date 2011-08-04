@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -18,42 +18,20 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO: self.oriFn ne se met pas a jour
-
 import sys
 import os
 import imp
 import re
-import string
+import gettext
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-## traduction
-import gettext
 
-from subclass import *
-import preview
-
-
-def return_new_filename(orifn, fn, incr=1):
-    """ renvoi les nom de fichier
-        remplace %F par le nom de base du fichier original
-        remplace %E par l'extention du fichier original
-        remplace %III par une incrémentation """
-    base = os.path.splitext(orifn) [0]
-    ext = os.path.splitext(orifn) [1]
-    fn = fn.replace('%F', base)
-    fn = fn.replace('%E', ext)
-    rechaine = ''
-    for i in xrange(1, 10):
-        pattern = '%I{' + str(i) + '}'
-        if re.search(pattern, fn):
-            nbincr = i
-            rechaine = '%'
-    if rechaine:
-        for i in range(nbincr):
-            rechaine = rechaine + 'I'
-        fn = fn.replace(rechaine, string.zfill(incr, nbincr))
-    return fn
+from subclass import Item
+from subclass import DragDropListWidget
+from subclass import TextEditDialog
+from preview import PrevDialog
+from funct import verif_images
+from funct import return_new_filename
 
 
 class ImgTab(QtGui.QWidget):
@@ -122,25 +100,9 @@ class ImgTab(QtGui.QWidget):
         li = []
         for i in url:
             li.append(str(i))
-        img = self.verif_images(li)
+        img = verif_images(li)
         for i in img:
             self.modImgList.appendRow(Item(i))
-        
-    def verif_images(self, url):
-        """ verifie que le chemin existe et que le fichier est une image """
-        images = []
-        for i in url:
-            ext = os.path.splitext(i) [1]
-            if (os.path.isfile(i) and 
-               (ext == ".png" or ext == ".PNG" or 
-                ext == ".gif" or ext == ".GIF" or 
-                ext == ".jpg" or ext == ".JPG" or 
-                ext == ".jpeg" or ext == ".JPEG" or
-                ext == ".tif" or ext == ".TIF" or
-                ext == ".tiff" or ext == ".TIFF")):
-                images.append(i)
-        images.sort()
-        return images
     
     def return_imgs(self):
         """ renvoi la liste des images"""
@@ -161,7 +123,7 @@ class ImgTab(QtGui.QWidget):
         if self.checkApercu.isChecked():
             sel = self.imgList.selectionModel().selectedIndexes()
             if sel:
-                img = sel[0].data().toString()
+                img = sel[0].data()
                 self.apercu.setPixmap(self.create_thumbnail(img))
             else:
                 self.apercu.setPixmap(self.create_thumbnail("alpha"))
@@ -259,8 +221,7 @@ class ActionTab(QtGui.QWidget):
                     "modname": i.MOD_NAME,
                     "description": i.DESCRIPTION,
                     "author": i.AUTHOR,
-                    "version": i.VERSION,
-                    "exec": i.EXEC_CLASS}
+                    "version": i.VERSION}
             self.modActionAvailableList.appendRow(Item(i.NAME, info)) 
         
     def add_action(self):
@@ -268,7 +229,7 @@ class ActionTab(QtGui.QWidget):
         sel = self.actionAvailableList.selectionModel().selectedIndexes()[0]
         if sel:
             item = self.modActionAvailableList.itemFromIndex(sel)
-            nItem = Item(sel.data().toString(), item.info)
+            nItem = Item(sel.data(), item.info)
             self.modActionList.appendRow(nItem)
             
     def remove_action(self):
@@ -292,19 +253,22 @@ class ActionTab(QtGui.QWidget):
             et enregistre le retour"""
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
-        exec ("""ok, code, desc, args = %s.%s(self.parent.imgTab.return_imgs(), 
-                    item.getArgs(), self.return_code(True), self).get_return()""" 
-                    %(item.info["modname"], item.info["exec"]))
-        if ok:
-            item.setCode(code)
-            item.setDesc(desc)
-            item.setArgs(args)
+        exec("""ok, code, desc, args = %s.ExecDialog(self.parent.imgTab.return_imgs(), 
+                                                     item.getArgs(), 
+                                                     self.return_code(True), 
+                                                     self).get_return()""" 
+                                       %(item.info["modname"], ))
+        
+        if locals()['ok']:
+            item.setCode(locals()['code'])
+            item.setDesc(locals()['desc'])
+            item.setArgs(locals()['args'])
         self.sel_action()
         
     def return_code(self, beforeSel=False):
         """ retourne le code des actions
-            tout le code si beforeSel==False
-            ou le code avant l'element selectionné si beforeSel==True"""
+            toutes les actions si beforeSel==False
+            ou les actions avant l'element selectionné si beforeSel==True"""
         if beforeSel:
             sel = self.actionList.selectionModel().selectedIndexes()[0]
             item = self.modActionList.itemFromIndex(sel)
@@ -318,7 +282,7 @@ class ActionTab(QtGui.QWidget):
         return code
         
     def preview(self):
-        ok = preview.PrevDialog(self.parent.imgTab.return_imgs(), 
+        ok = PrevDialog(self.parent.imgTab.return_imgs(), 
                                 self.return_code(), self)
 
 
@@ -390,6 +354,7 @@ class SaveTab(QtGui.QWidget):
         layout.addLayout(okBox)
         
     def tab_enter (self):
+        """change le nom de fichier en fonction des fichiers ajoutés"""
         if len(self.imgs) > 0:
             self.oriFn = os.path.split(self.imgs[0]) [1]
         else:
@@ -424,154 +389,12 @@ class SaveTab(QtGui.QWidget):
         ApplyDialog(self.dossier, fn, self.code, self.imgs, self)
 
 
-class ApplyDialog(QtGui.QDialog):
-    def __init__(self, rep, fn, code, images, parent=None):
-        super(ApplyDialog, self).__init__(parent)
-        self.parent = parent
-        self.quit = False
-        self.fin = False
-        
-        ### progress bar
-        self.barre = QtGui.QProgressBar(self)
-        self.barre.setRange(0, len(images))
-        self.barre.setValue(0)
-
-        ### stop ###
-        self.stopW = QtGui.QPushButton(_("stop"), self)
-        self.stopW.clicked.connect(self.stopClicked)
-        ### quit ###
-        self.quitW = QtGui.QPushButton(_("quit"), self)
-        self.quitW.clicked.connect(self.quitClicked)
-        
-        ### text edit ###
-        self.errorW = QtGui.QTextEdit()
-        self.errorW.setReadOnly(True)
-        
-        ### thread ###
-        self.applyThread = Apply(rep, fn, code, images)
-        self.applyThread.infoBatch.connect(self.infoBatch)
-        self.applyThread.finBatch.connect(self.finBatch)
-        self.applyThread.start()
-        
-        ### layout ###
-        toolBox = QtGui.QHBoxLayout()
-        toolBox.addStretch(0)
-        toolBox.addWidget(self.stopW)
-        toolBox.addWidget(self.quitW)
-        vBox = QtGui.QVBoxLayout()
-        vBox.addWidget(self.barre)
-        vBox.addWidget(self.errorW)
-        vBox.addLayout(toolBox)
-        self.setLayout(vBox)
-        self.exec_()
-        
-    def stopClicked(self):
-        self.applyThread.stop = True
-        self.stopW.setDisabled(True)
-        
-    def infoBatch(self, info):
-        self.barre.setValue(info[0])
-        self.errorW.setText(info[1])
-        
-    def finBatch(self, truc):
-        if self.quit:
-            self.applyThread.quit()
-            self.accept()
-        else:
-            self.applyThread.quit()
-            self.fin = True
-            self.stopW.setDisabled(True)
-
-    def quitClicked(self):
-        if self.fin:
-            self.applyThread.quit()
-            self.accept()
-        else:
-            self.applyThread.stop = True
-            self.quit = True
-            
-    def closeEvent(self, event):
-        if self.fin:
-            self.applyThread.quit()
-            event.accept()
-        else:
-            self.applyThread.stop = True
-            self.quit = True
-            event.ignore()
-
-
-class Apply(QtCore.QThread):
-    """ TODO: pouvoir stopper le thread a n'importe quel moment proprement
-    """
-    infoBatch = QtCore.pyqtSignal(tuple)
-    finBatch = QtCore.pyqtSignal(bool)
-    def __init__(self, rep, fn, code, images, parent=None):
-        super(Apply, self).__init__(parent)
-        self.rep = rep
-        self.fn = fn
-        self.code = code.replace("$i", "im")
-        self.images = images
-        self.error = ""
-        self.stop = False
-        
-    def run(self):
-        if not os.path.isdir(self.rep):
-            try:
-                os.mkdir(self.rep)
-            except:
-                self.error = "%sle repertoire(%s) n'as pas pu etre créé\n" %(self.error, rep)
-                self.infoBatch.emit((0, self.error))
-                return
-                
-        n = 0   
-        im = QtGui.QImage()
-        for i in self.images:
-            n = n + 1
-            fn = return_new_filename(os.path.split(i)[1], self.fn, n)
-            fn = os.path.join(self.rep, fn)
-            # verifie que le fichier n'existe pas déja
-            # a modifier pour permettre d'ecraser les fichiers
-            if os.path.isfile(fn):
-                self.error = "%sle fichier (%s) existe deja\n" %(self.error, fn)
-                self.infoBatch.emit((n, self.error))
-            else:
-                ### ouverture de l'image ###
-                if not self.stop:
-                    if im.load(i):
-                        pass
-                    else:
-                        self.error = "%simage illisible\n" %(self.error,)
-                        self.infoBatch.emit((n-1, self.error))
-                        continue
-                else: break
-                    
-                ### execution du code ###
-                if not self.stop:
-                    try:
-                        exec self.code
-                    except:
-                        self.error = "%scode incorrect\n" %(self.error,)
-                        self.infoBatch.emit((n-1, self.error))
-                        continue
-                else: break
-                
-                ### enregistrement de l'image ###
-                if not self.stop:
-                    if im.save(fn):
-                        self.error = "%s%s\n" %(self.error, i)
-                        self.infoBatch.emit((n, self.error))
-                    else:
-                        self.error = "%sl'image ne peut pas etre enregistree\n" %(self.error,)
-                        self.infoBatch.emit((n-1, self.error))
-                else: break
-        self.finBatch.emit(True)
-
-
 class MainDialog(QtGui.QDialog):
     """ fenetre principale de l'application """
     img_enter = QtCore.pyqtSignal()
     action_enter = QtCore.pyqtSignal()
     save_enter = QtCore.pyqtSignal()
+    
     def __init__(self, images, dossier, parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle(_("imagemash"))
@@ -607,24 +430,25 @@ class MainDialog(QtGui.QDialog):
 if __name__=="__main__":
     ### import des images ##############################################
     if len(sys.argv) == 1:
-        sys.argv.append("/home/pops/prog/img")
-    fichiers = []
-    dossier = ""
+        sys.argv.append("test/imgs")
     if len(sys.argv) > 1:
         if os.path.isdir(sys.argv[1]):
-            for i in os.listdir(sys.argv[1]):
-                fichiers.append(os.path.join(sys.argv[1], i))
+            fichiers = [os.path.join(sys.argv[1], i) 
+                        for i in os.listdir(sys.argv[1])]
             dossier = sys.argv[1]
         else:
-            for i in sys.argv[1:]:
-                if os.path.isfile(i):
-                    fichiers.append(i)
+            fichiers = [i for i in sys.argv[1:] if os.path.isfile(i)]
             dossier = os.path.dirname(sys.argv[1])
+    else:
+        fichiers = []
+        dossier = ""
     
     ### import des plugins #############################################
-    pluginPath = os.path.join(os.path.dirname(imp.find_module("imagemash")[1]), "plugins/")
+    pluginPath = os.path.join(os.path.dirname(
+                           imp.find_module("imagemash")[1]), "plugins/")
     pluginFiles = [fname[:-3] for fname in os.listdir(pluginPath) 
-                   if fname.endswith(".py") and fname.startswith("plugin_")]
+                   if fname.endswith(".py") 
+                   and fname.startswith("plugin_")]
     if not pluginPath in sys.path:
         sys.path[:0] = [pluginPath]
     importedModules = []
@@ -633,9 +457,11 @@ if __name__=="__main__":
         exec("%s = sys.modules[i]"%(i,))
     
     ### traduction #####################################################
-    import gettext
-    gettext.install("imagemash", "./locale/fr", unicode=True)
-    presLan_fr = gettext.translation("imagemash", "./locale", languages=['fr'])
+    localesPath = os.path.join(os.path.dirname(
+                           imp.find_module("imagemash")[1]), "locale/")
+    gettext.install("imagemash", os.path.join(localesPath, "fr"))
+    presLan_fr = gettext.translation("imagemash", localesPath, 
+                                     languages=['fr'])
     presLan_fr.install()
     
     ### demarage de l'interface ########################################

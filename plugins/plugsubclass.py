@@ -86,7 +86,7 @@ class Painting(QtGui.QWidget):
         self.fig = fig
         self.isFig = True
         self.color = color
-        self.fig.rectChanged.connect(self.draw)
+        self.fig.figChanged.connect(self.draw)
         
     def paintEvent(self, ev):
         p = QtGui.QPainter()
@@ -109,6 +109,7 @@ class Painting(QtGui.QWidget):
                     p.setBrush(alpha)
                     p.drawPath(i[1])
                 if i[0] == "ligne":
+                    p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
                     p.drawPath(i[1])
                 if i[0] == "poignee":
                     p.setPen(QtGui.QPen(self.color, 1, QtCore.Qt.SolidLine))
@@ -132,21 +133,27 @@ class Painting(QtGui.QWidget):
     def change_image(self, image, code=""):
         self.imOri.load(image)
         code = code.replace("$i", "self.imOri")
-        exec code
+        exec(code)
         self.imH = self.imOri.height()
         self.imW = self.imOri.width()
         self.zoom()
-
+        
+    def apply_code(self, code):
+        code = code.replace("$i", "self.imOri")
+        exec(code)
+        self.imH = self.imOri.height()
+        self.imW = self.imOri.width()
+		
     def event(self, event):
         ### clic ###
         if   (event.type() == QtCore.QEvent.MouseButtonPress and 
               event.button() == QtCore.Qt.LeftButton):
-            self.clicSignal.emit((event.x(), event.y(), self.zoomN))
+            self.clicSignal.emit(event.x(), event.y(), self.zoomN)
             return True
         ### move ###
         elif (event.type() == QtCore.QEvent.MouseMove and 
               event.buttons() == QtCore.Qt.LeftButton):
-            self.moveSignal.emit((event.x(), event.y(), self.zoomN))
+            self.moveSignal.emit(event.x(), event.y(), self.zoomN)
             self.draw()
             return True
         return QtGui.QWidget.event(self, event)

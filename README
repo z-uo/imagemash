@@ -7,3 +7,7 @@ with some cool thing such as preview and interactive tools (only one now)
 it is released under the GNU GPL V3
 
 the software is in developement and have only one plugin now
+
+Thunar custom action:
+xterm -hold -e "python3 /media/donees/programation/imagemash/imagemash.py %F"
+
