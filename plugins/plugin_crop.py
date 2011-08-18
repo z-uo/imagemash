@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -97,6 +97,7 @@ class ExecDialog(QtGui.QDialog):
         self.actionW = QtGui.QComboBox(self)
         self.actionW.addItem("ignore aspect ratio")
         self.actionW.addItem("keep aspect ratio")
+        #self.actionW.addItem("define aspect ratio")
         self.actionW.addItem("keep aspect ratio and resize")
         self.actionW.addItem("recadre au pixel pres")
         
@@ -232,9 +233,11 @@ class ExecDialog(QtGui.QDialog):
         self.painting.draw()
         
     def action_changed(self, text):
+        print(self.wW.text())
+        print(self.hW.text())
         if not self.painting.fig.action_changed(self.actionW.currentIndex(), 
-                                                self.wW.text().toInt()[0], 
-                                                self.hW.text().toInt()[0]):
+                                                int(self.wW.text()), 
+                                                int(self.hW.text())):
             self.actionW.setCurrentIndex(0)
         
     def edit_clicked(self):
@@ -348,17 +351,17 @@ class EditDialog(QtGui.QDialog):
         
     def get_return(self):
         if self.result():
-            x = self.xW.text().toInt()[0]
-            y = self.yW.text().toInt()[0]
-            w = self.wW.text().toInt()[0]
-            h = self.hW.text().toInt()[0]
+            x = int(self.xW.text())
+            y = int(self.yW.text())
+            w = int(self.wW.text())
+            h = int(self.hW.text())
             return True, x, y, w, h
         else:
             return False, None, None, None, None
             
 
 if __name__=="__main__":
-    image = "/media/donees/programation/imagemash/test/imgs/IMGP0333.JPG"
+    image = "/media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
     win = ExecDialog([image])

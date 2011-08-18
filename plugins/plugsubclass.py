@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -42,8 +42,9 @@ class Viewer(QtGui.QScrollArea):
     
     # bof
     def zoom(self, n):
-        self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() * n)
-        self.verticalScrollBar().setValue(self.verticalScrollBar().value() * n)
+        #~ self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() * n)
+        #~ self.verticalScrollBar().setValue(self.verticalScrollBar().value() * n)
+        pass
         
     def event(self, event):
         """ capture middle mouse event to move the view """
@@ -68,8 +69,8 @@ class Viewer(QtGui.QScrollArea):
 class Painting(QtGui.QWidget):
     """ preview of the image and interation with the mouse
     """
-    clicSignal = QtCore.pyqtSignal(tuple) # x, y, zoom
-    moveSignal = QtCore.pyqtSignal(tuple) # x, y, zoom
+    clicSignal = QtCore.pyqtSignal(int, int, float) # x, y, zoom
+    moveSignal = QtCore.pyqtSignal(int, int, float) # x, y, zoom
     
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.2
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -170,6 +170,8 @@ class ActionTab(QtGui.QWidget):
         self.actionAdd.clicked.connect(self.add_action)
         self.actionRemove = QtGui.QPushButton(_("remove"))
         self.actionRemove.clicked.connect(self.remove_action)
+        self.actionEdit = QtGui.QPushButton(_("edit"))
+        self.actionEdit.clicked.connect(self.edit_action)
         
         ### action ###
         self.actionListLabel = QtGui.QLabel(_("actions"))
@@ -192,6 +194,7 @@ class ActionTab(QtGui.QWidget):
         toolBox = QtGui.QVBoxLayout()
         toolBox.addWidget(self.actionAdd)
         toolBox.addWidget(self.actionRemove)
+        toolBox.addWidget(self.actionEdit)
         toolBox.addStretch(0)
         
         descBox = QtGui.QVBoxLayout()
@@ -248,7 +251,7 @@ class ActionTab(QtGui.QWidget):
         else:
             self.labelActionDesc.setText("")
         
-    def edit_action(self, text):
+    def edit_action(self, text=''):
         """ lance le plugin selectionné
             et enregistre le retour"""
         sel = self.actionList.selectionModel().selectedIndexes()[0]
@@ -309,13 +312,17 @@ class SaveTab(QtGui.QWidget):
         self.filenameEdit = QtGui.QLineEdit(self)
         self.filenameEdit.setText("%F%E")
         self.filenameEdit.textChanged[str].connect(self.filename_changed)
+        
+        self.oriFilenameLabel = QtGui.QLabel(_("original filename:"))
         self.oriFilename = QtGui.QLabel()
+        
+        self.newFilenameLabel = QtGui.QLabel(_("new filename:"))
         self.newFilename = QtGui.QLabel()
         self.tab_enter()
         self.parent.save_enter.connect(self.tab_enter)
         
         ### doc nom de fichier ###
-        self.doc = _( """%F : original file name
+        self.doc = _( """%F : original filename
 %E : original extension
 %I : increment (10 digits)""")
         self.docLabel = QtGui.QLabel(self.doc)
@@ -334,12 +341,15 @@ class SaveTab(QtGui.QWidget):
         ### layout ###
         fileGrid = QtGui.QGridLayout()
         fileGrid.addWidget(self.dossierLabel, 0, 0)
-        fileGrid.addWidget(self.dossierEdit, 0, 1, 1, 2)
-        fileGrid.addWidget(self.dossierChooser, 0, 3)
+        fileGrid.addWidget(self.dossierEdit, 0, 1, 1, 3)
+        fileGrid.addWidget(self.dossierChooser, 0, 4)
         fileGrid.addWidget(self.filenameLabel, 2, 0)
         fileGrid.addWidget(self.filenameEdit, 2, 1)
-        fileGrid.addWidget(self.oriFilename, 1, 2)
-        fileGrid.addWidget(self.newFilename, 2, 2)
+        
+        fileGrid.addWidget(self.oriFilenameLabel, 1, 2)
+        fileGrid.addWidget(self.oriFilename, 1, 3)
+        fileGrid.addWidget(self.newFilenameLabel, 2, 2)
+        fileGrid.addWidget(self.newFilename, 2, 3)
         fileGrid.addWidget(self.docLabel, 3, 1)
         fileGrid.addWidget(self.codeEditButton, 4, 1)
         

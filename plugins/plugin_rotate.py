@@ -268,7 +268,7 @@ w = %s h = %s""" %(desc, outW, outH)
 def test():
 	print("ok")
 if __name__=="__main__":
-    image = "media/donees/programation/imagemash/test/imgs/IMGP0333.JPG"
+    image = "media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     win = ExecDialog([image])
     win.show()

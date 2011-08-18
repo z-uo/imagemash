@@ -8,11 +8,14 @@ README
     a reecrire
 imagemash.py
     revoir qthread
-    ajouter un bouton pour modifier une action
+    #ajouter un bouton pour modifier une action
     #revoir les descriptions / code DONE: probleme avec exec
     ajouter des labels anciens nom / nouveau nom
     #ajouter des noms aux fenetres
     
+plugin_crop
+	recadre au pixel pres
+	keep aspect ratio and resize
 plugins
     ecrire squelette de plugin
     vérifier la syntaxe des plugin
