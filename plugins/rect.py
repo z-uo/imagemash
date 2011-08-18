@@ -84,29 +84,13 @@ class Rect(QtCore.QObject):
             self.ratio = (w, h)
             self.outW = False
             self.outH = False
-        elif w > 0 and h > 0:
-            if index == 1: #keep aspect ratio
-                self.keepRatio = True
-                self.scale = True
-                self.ratio = (w, h)
-                self.outW = False
-                self.outH = False
-                self.keep_ratio()
-            elif index == 2: #keep aspect ratio and resize
-                self.keepRatio = True
-                self.scale = True
-                self.ratio = (w, h)
-                self.outW = w ## TODO
-                self.outH = h ## TODO
-                self.keep_ratio()
-            elif index == 3: #recadre au pixel pres
-                self.keepRatio = True
-                self.scale = False
-                self.ratio = (w, h)
-                self.outW = False
-                self.outH = False
-                self.w = w
-                self.h = h
+        elif index == 1 and w > 0 and h > 0: #keep aspect ratio
+            self.keepRatio = True
+            self.scale = True
+            self.ratio = (w, h)
+            self.outW = False
+            self.outH = False
+            self.keep_ratio()
         else:
             return False
         self.figChanged.emit()

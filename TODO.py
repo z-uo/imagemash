@@ -16,6 +16,7 @@ imagemash.py
 plugin_crop
 	recadre au pixel pres
 	keep aspect ratio and resize
+	expliquer erreur keep aspect ratio
 plugins
     ecrire squelette de plugin
     vérifier la syntaxe des plugin

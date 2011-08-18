@@ -97,9 +97,6 @@ class ExecDialog(QtGui.QDialog):
         self.actionW = QtGui.QComboBox(self)
         self.actionW.addItem("ignore aspect ratio")
         self.actionW.addItem("keep aspect ratio")
-        #self.actionW.addItem("define aspect ratio")
-        self.actionW.addItem("keep aspect ratio and resize")
-        self.actionW.addItem("recadre au pixel pres")
         
         ### w ###
         self.wL = QtGui.QLabel("width : ")
@@ -232,13 +229,12 @@ class ExecDialog(QtGui.QDialog):
             self.painting.color = self.color
         self.painting.draw()
         
-    def action_changed(self, text):
-        print(self.wW.text())
-        print(self.hW.text())
+    def action_changed(self, text=""):
         if not self.painting.fig.action_changed(self.actionW.currentIndex(), 
-                                                int(self.wW.text()), 
-                                                int(self.hW.text())):
+                                                    int(self.wW.text()), 
+                                                    int(self.hW.text())):
             self.actionW.setCurrentIndex(0)
+            #TODO error
         
     def edit_clicked(self):
         ok, x, y, w, h =  EditDialog(self, self.painting.fig.x, 
@@ -246,6 +242,8 @@ class ExecDialog(QtGui.QDialog):
                                            self.painting.fig.w, 
                                            self.painting.fig.h).get_return()
         if ok:
+            self.actionW.setCurrentIndex(0)
+            self.action_changed()
             self.painting.fig.set_xywh(x, y, w, h)
             
     def rect_changed(self):
