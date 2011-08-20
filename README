@@ -2,11 +2,15 @@ IMAGEMASH
 by pops
 
 an image batch processor written in python and pyqt 
-with some cool thing such as preview and interactive tools (only one now)
+with some cool thing such as preview and interactive tools
 
 it is released under the GNU GPL V3
 
-the software is in developement and have only one plugin now
+the software is in developement
+there are only 3 plugin working now:
+    a crop plugin
+    a resize plugin
+    a flip/rotate plugin
 
 Thunar custom action:
 xterm -hold -e "python3 /media/donees/programation/imagemash/imagemash.py %F"

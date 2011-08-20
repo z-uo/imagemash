@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -18,9 +18,6 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO: implementer args
-# ! EXECCLASS
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -31,6 +28,8 @@ DESCRIPTION = "flip / rotate"
 AUTHOR = "pops"
 VERSION = 0.1
 
+
+########################################################################
 class ExecDialog(QtGui.QDialog):
     def __init__(self, images=[], args=None, code="", parent=None):
         QtGui.QDialog.__init__(self, parent)

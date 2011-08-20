@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -18,16 +18,15 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO: scrollbar qui suit le zoom
-# TODO: pb args
+import sys
+import os
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4 import Qt
-import sys, os
 import math
 
-from plugsubclass import *
-from line import *
+from plugsubclass import Viewer
+from plugsubclass import Painting
+from rect import Rect
 
 ### plugin infos #######################################################
 NAME = "rotation"
@@ -37,7 +36,6 @@ AUTHOR = "pops"
 VERSION = 0.1
 
 
-        
 ########################################################################
 class ExecDialog(QtGui.QDialog):
     def __init__(self, images, args=None, code="", parent=None):
@@ -256,8 +254,8 @@ w = %s h = %s""" %(desc, outW, outH)
             # (windows args), (fig args)
             # (action, w, h, color, x, y, w, h, zoom)
             args = (self.actionW.currentIndex(),
-                     self.wW.text().toInt()[0], 
-                     self.hW.text().toInt()[0], 
+                     int(self.wW.text()), 
+                     int(self.hW.text(), 
                      self.painting.zoomN, 
                      self.color, 
                      (x, y, w, h))

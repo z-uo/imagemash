@@ -1,4 +1,4 @@
-#!/usr/bin/python3.2
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 #
 #Copyright pops (pops451@gmail.com), 2010-2011
@@ -324,7 +324,7 @@ class SaveTab(QtGui.QWidget):
         ### doc nom de fichier ###
         self.doc = _( """%F : original filename
 %E : original extension
-%I : increment (10 digits)""")
+%I to %IIIIIIIIII : increment (1 to 10 digits)""")
         self.docLabel = QtGui.QLabel(self.doc)
         
         ### code ###

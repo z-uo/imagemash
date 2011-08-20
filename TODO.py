@@ -14,13 +14,18 @@ imagemash.py
     #ajouter des noms aux fenetres
     
 plugin_crop
-	recadre au pixel pres
-	keep aspect ratio and resize
 	expliquer erreur keep aspect ratio
+	revoir les scrollbars dans plugsubclass.viewer
+	#ajouter keep aspect ratio and resize
+	#griser zone de saisie en pensant au 0
+
+plugin flip
+    verif args
 plugins
     ecrire squelette de plugin
     vérifier la syntaxe des plugin
     ranger chaque plugin dans un dossier
+    ecrire de la doc pour faire des plugins
     
 V2
 imagemash.py

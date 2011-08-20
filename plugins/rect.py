@@ -18,10 +18,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+import os
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4 import Qt
-import sys, os
 
 
 class Rect(QtCore.QObject):
@@ -91,6 +91,21 @@ class Rect(QtCore.QObject):
             self.outW = False
             self.outH = False
             self.keep_ratio()
+        elif index == 2 and w > 0 and h > 0:#keep aspect ratio and resize
+            self.keepRatio = True
+            self.scale = True
+            self.ratio = (w, h)
+            self.outW = w ## TODO
+            self.outH = h ## TODO
+            self.keep_ratio()
+        elif index == 3 and w > 0 and h > 0:#set width and height
+            self.keepRatio = True
+            self.scale = False
+            self.ratio = (w, h)
+            self.outW = False
+            self.outH = False
+            self.w = w
+            self.h = h
         else:
             return False
         self.figChanged.emit()
@@ -176,8 +191,8 @@ class Rect(QtCore.QObject):
                     self.action = "move"
                     self.x = mouseX
                     self.y = mouseY
-                    self.w = self.parent.parent.wW.text().toInt()[0]
-                    self.h = self.parent.parent.hW.text().toInt()[0]
+                    self.w = int(self.parent.parent.wW.text())
+                    self.h = int(self.parent.parent.hW.text())
                     self.diffX = 0
                     self.diffY = 0
         elif not self.scale:
@@ -185,8 +200,8 @@ class Rect(QtCore.QObject):
             self.action = "move"
             self.x = mouseX
             self.y = mouseY
-            self.w = self.parent.parent.wW.text().toInt()[0]
-            self.h = self.parent.parent.hW.text().toInt()[0]
+            self.w = int(self.parent.parent.wW.text())
+            self.h = int(self.parent.parent.hW.text())
             self.diffX = 0
             self.diffY = 0
         # sinon enregistre la position de la souris 

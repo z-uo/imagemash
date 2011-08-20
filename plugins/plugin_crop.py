@@ -18,17 +18,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
-# TODO: scrollbar qui suit le zoom
-# TODO: s'arreter aux bord de l'image
-# TODO: conserver ratio lineEdit w/h
-# TODO: pb args
+import sys
+import os
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-from PyQt4 import Qt
-import sys, os
 
-from plugsubclass import *
-from rect import *
+from plugsubclass import Viewer
+from plugsubclass import Painting
+from rect import Rect
 
 ### plugin infos #######################################################
 NAME = "recadrage"
@@ -38,7 +35,6 @@ AUTHOR = "pops"
 VERSION = 0.1
 
 
-        
 ########################################################################
 class ExecDialog(QtGui.QDialog):
     def __init__(self, images, args=None, code="", parent=None):
@@ -97,6 +93,8 @@ class ExecDialog(QtGui.QDialog):
         self.actionW = QtGui.QComboBox(self)
         self.actionW.addItem("ignore aspect ratio")
         self.actionW.addItem("keep aspect ratio")
+        self.actionW.addItem("keep aspect ratio and resize")
+        self.actionW.addItem("define width and height")
         
         ### w ###
         self.wL = QtGui.QLabel("width : ")
@@ -230,27 +228,71 @@ class ExecDialog(QtGui.QDialog):
         self.painting.draw()
         
     def action_changed(self, text=""):
+        print("hop")
+        if self.hW.text() == "" or self.wW.text() == "":
+            return
+        #~ elif int(self.hW.text()) == 0 or int(self.wW.text()) == 0:
+            #~ self.actionW.setCurrentIndex(0)
+            #~ error = QtGui.QMessageBox(self)
+            #~ error.setWindowTitle("error")
+            #~ error.setText("The size must be greater than 0.")
+            #~ error.setIcon(2)
+            #~ error.exec()
+            #~ return
+        #~ if self.actionW.currentIndex() == 0:
+            #~ self.wW.setDisabled(True)
+            #~ self.hW.setDisabled(True)
+        #~ else:
+            #~ self.wW.setDisabled(False)
+            #~ self.hW.setDisabled(False)
         if not self.painting.fig.action_changed(self.actionW.currentIndex(), 
                                                     int(self.wW.text()), 
                                                     int(self.hW.text())):
             self.actionW.setCurrentIndex(0)
-            #TODO error
-        
+            error = QtGui.QMessageBox(self)
+            error.setWindowTitle("error")
+            error.setText("The size must be greater than 0.")
+            error.setIcon(2)
+            error.exec()
+
+            
     def edit_clicked(self):
         ok, x, y, w, h =  EditDialog(self, self.painting.fig.x, 
                                            self.painting.fig.y, 
                                            self.painting.fig.w, 
                                            self.painting.fig.h).get_return()
         if ok:
-            self.actionW.setCurrentIndex(0)
-            self.action_changed()
-            self.painting.fig.set_xywh(x, y, w, h)
+            print(w)
+            print(h)
+            if w == "" or h == "":
+                return
+            x = int(x)
+            y = int(y)
+            w = int(w)
+            h = int(h)
+            
+            if w == 0 or h == 0:
+                self.actionW.setCurrentIndex(0)
+                error = QtGui.QMessageBox(self)
+                error.setWindowTitle("error")
+                error.setText("The size must be greater than 0.")
+                error.setIcon(2)
+                error.exec()
+            else:
+                self.actionW.setCurrentIndex(3)
+                self.wW.setText(str(w))
+                self.hW.setText(str(h))
+                self.painting.fig.set_xywh(x, y, w, h)
             
     def rect_changed(self):
         self.oriWL.setText(str(self.painting.imW))
         self.oriHL.setText(str(self.painting.imH))
-        self.newWL.setText(str(self.painting.fig.w or ""))
-        self.newHL.setText(str(self.painting.fig.h or ""))
+        if self.actionW.currentIndex() == 2: #keep aspect ratio and resize
+            self.newWL.setText(self.wW.text())
+            self.newHL.setText(self.hW.text())
+        else:
+            self.newWL.setText(str(self.painting.fig.w or ""))
+            self.newHL.setText(str(self.painting.fig.h or ""))
         
     def ok_clicked(self):
         self.accept()
@@ -269,22 +311,14 @@ class ExecDialog(QtGui.QDialog):
                 desc = """x = %s y = %s
 w = %s h = %s""" %(x, y, w, h)
 
-                if self.actionW.currentIndex() == 2: #keep aspect ratio and resize
-                    outW = self.painting.fig.outW
-                    outH = self.painting.fig.outH
-                    code = """%s
-$i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)""" %(code, outW, outH)
-                    desc = """%s
-resized to:
-w = %s h = %s""" %(desc, outW, outH)
             else:
                 code = ""
                 desc = ""
             # (windows args), (fig args)
             # (action, w, h, color, x, y, w, h, zoom)
             args = (self.actionW.currentIndex(),
-                     self.wW.text().toInt()[0], 
-                     self.hW.text().toInt()[0], 
+                     int(self.wW.text()), 
+                     int(self.hW.text()), 
                      self.painting.zoomN, 
                      self.color, 
                      (x, y, w, h))
@@ -292,7 +326,7 @@ w = %s h = %s""" %(desc, outW, outH)
         else:
             return False, None, None, None
             
-            
+########################################################################
 class EditDialog(QtGui.QDialog):
     def __init__(self, parent=None, x=0, y=0, w=1, h=1):
         QtGui.QDialog.__init__(self, parent)
@@ -349,10 +383,10 @@ class EditDialog(QtGui.QDialog):
         
     def get_return(self):
         if self.result():
-            x = int(self.xW.text())
-            y = int(self.yW.text())
-            w = int(self.wW.text())
-            h = int(self.hW.text())
+            x = self.xW.text()
+            y = self.yW.text()
+            w = self.wW.text()
+            h = self.hW.text()
             return True, x, y, w, h
         else:
             return False, None, None, None, None

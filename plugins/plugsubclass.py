@@ -17,7 +17,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import division
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
@@ -158,4 +158,3 @@ class Painting(QtGui.QWidget):
             self.draw()
             return True
         return QtGui.QWidget.event(self, event)
-        
