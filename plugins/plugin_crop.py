@@ -228,7 +228,6 @@ class ExecDialog(QtGui.QDialog):
         self.painting.draw()
         
     def action_changed(self, text=""):
-        print("hop")
         if self.hW.text() == "" or self.wW.text() == "":
             return
         #~ elif int(self.hW.text()) == 0 or int(self.wW.text()) == 0:
@@ -262,8 +261,6 @@ class ExecDialog(QtGui.QDialog):
                                            self.painting.fig.w, 
                                            self.painting.fig.h).get_return()
         if ok:
-            print(w)
-            print(h)
             if w == "" or h == "":
                 return
             x = int(x)
