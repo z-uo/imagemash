@@ -234,7 +234,8 @@ class ActionTab(QtGui.QWidget):
             item = self.modActionAvailableList.itemFromIndex(sel)
             nItem = Item(sel.data(), item.info)
             self.modActionList.appendRow(nItem)
-
+            self.actionList.setCurrentIndex(self.modActionList.index(self.modActionList.rowCount()-1,0))
+            self.edit_action()
     def remove_action(self):
         """ suprime une action de la liste des action a effectuer sur les images """
         sel = self.actionList.selectionModel().selectedIndexes()
@@ -254,6 +255,7 @@ class ActionTab(QtGui.QWidget):
     def edit_action(self, text=''):
         """ lance le plugin selectionné
             et enregistre le retour"""
+        print("plop")
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
         exec("""ok, code, desc, args = %s.ExecDialog(self.parent.imgTab.return_imgs(),
