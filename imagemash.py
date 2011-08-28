@@ -231,11 +231,14 @@ class ActionTab(QtGui.QWidget):
         """ ajoute une action dans la liste des action a effectuer sur les images """
         sel = self.actionAvailableList.selectionModel().selectedIndexes()[0]
         if sel:
+            #add item to the action list
             item = self.modActionAvailableList.itemFromIndex(sel)
             nItem = Item(sel.data(), item.info)
             self.modActionList.appendRow(nItem)
+            #select and edit item
             self.actionList.setCurrentIndex(self.modActionList.index(self.modActionList.rowCount()-1,0))
             self.edit_action()
+
     def remove_action(self):
         """ suprime une action de la liste des action a effectuer sur les images """
         sel = self.actionList.selectionModel().selectedIndexes()

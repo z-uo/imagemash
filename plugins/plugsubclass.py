@@ -155,6 +155,12 @@ class Painting(QtGui.QWidget):
         self.imW = self.imOri.width()
         self.zoom()
 
+    def reset(self):
+        self.imOri = self.imRotOri
+        self.imH = self.imOri.height()
+        self.imW = self.imOri.width()
+        self.zoom()
+
 
     def event(self, event):
         ### clic ###

@@ -101,6 +101,9 @@ class ExecDialog(QtGui.QDialog):
         ### apercu ###
         self.apercuW = QtGui.QPushButton("apercu")
 
+        ### reset ###
+        self.resetW = QtGui.QPushButton("reset")
+
         ### viewer ###
         self.painting = Painting(self)
         if args:
@@ -123,6 +126,7 @@ class ExecDialog(QtGui.QDialog):
         self.actionW.activated[str].connect(self.action_changed)
         self.degreW.textChanged.connect(self.degre_changed)
         self.apercuW.clicked.connect(self.apercu_clicked)
+        self.resetW.clicked.connect(self.reset_clicked)
 
         self.okW.clicked.connect(self.ok_clicked)
         self.undoW.clicked.connect(self.undo_clicked)
@@ -159,9 +163,10 @@ class ExecDialog(QtGui.QDialog):
         grid.addWidget(self.actionW, 0, 1)
 
         grid.addWidget(self.degreL, 0, 2)
-        grid.addWidget(self.degreW, 1, 2)
+        grid.addWidget(self.degreW, 0, 3)
 
         grid.addWidget(self.apercuW, 1, 3)
+        grid.addWidget(self.resetW, 1, 2)
 
         ### ok, undo ###
         okBox = QtGui.QHBoxLayout()
@@ -205,10 +210,12 @@ class ExecDialog(QtGui.QDialog):
             print("ligne horizontale")
             self.degreW.setDisabled(True)
             self.painting.fig.setDisabled(False)
+            self.reset_clicked()
         elif self.actionW.currentIndex() == 1:
             print("ligne verticale")
             self.degreW.setDisabled(True)
             self.painting.fig.setDisabled(False)
+            self.reset_clicked()
         elif self.actionW.currentIndex() == 2:
             print("angle")
             self.degreW.setDisabled(False)
@@ -217,33 +224,51 @@ class ExecDialog(QtGui.QDialog):
 
     def apercu_clicked(self):
         if self.actionW.currentIndex() == 0:
-            x1 = self.painting.fig.x1
-            y1 = self.painting.fig.y1
-            x2 = self.painting.fig.x2
-            y2 = self.painting.fig.y2
+            x1, x2 = self.painting.fig.x1, self.painting.fig.x2
+            y1, y2 = self.painting.fig.y1, self.painting.fig.y2
             hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
             cos = (x2 - x1) / hypotenuse
             angle = math.degrees(math.acos(cos))
             if y2 < y1 :
                 angle = -angle
-            self.angle = -angle + self.angle
+            if x2 < x1 :
+                angle = angle - 180
+            self.angle = self.angle - angle
             self.degreW.setText(str(self.angle))
+
         elif self.actionW.currentIndex() == 1:
-            pass
+            x1, x2 = self.painting.fig.x1, self.painting.fig.x2
+            y1, y2 = self.painting.fig.y1, self.painting.fig.y2
+            hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
+            cos = (y2 - y1) / hypotenuse
+            angle = math.degrees(math.acos(cos))
+            if x1 < x2 :
+                angle = -angle
+            if y2 < y1 :
+                angle = angle - 180
+            self.angle = self.angle - angle
+            self.degreW.setText(str(self.angle))
+
         elif self.actionW.currentIndex() == 2:
             self.angle = float(self.degreW.text())
 
-        code = """matrix = QtGui.QMatrix()
+        if self.angle != 0:
+            code = """matrix = QtGui.QMatrix()
 matrix.rotate(%s)
 $i = $i.transformed(matrix, QtCore.Qt.FastTransformation)""" %(self.angle,)
-        print(code)
-        self.painting.apply_rotation(code)
-        self.painting.fig.hide()
+            self.painting.fig.hide()
+            self.painting.apply_rotation(code)
+        else:
+            self.painting.reset()
         #self.painting.fig.setDisabled(True)
-        self.painting.draw()
         # ajouter angle aux bouton d'angle
         # tourner l'image
         # enlever ligne
+
+    def reset_clicked(self):
+        self.painting.reset()
+        self.degreW.setText("0")
+        self.angle = 0
 
     def degre_changed(self):
         pass
