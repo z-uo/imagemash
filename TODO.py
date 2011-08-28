@@ -12,7 +12,8 @@ imagemash.py
     #revoir les descriptions / code DONE: probleme avec exec
     ajouter des labels anciens nom / nouveau nom
     #ajouter des noms aux fenetres
-    
+    ouvrir la fenetre déedition d action quand elle est ajoutee
+
 plugin_crop
 	expliquer erreur keep aspect ratio
 	revoir les scrollbars dans plugsubclass.viewer
@@ -26,7 +27,7 @@ plugins
     vérifier la syntaxe des plugin
     ranger chaque plugin dans un dossier
     ecrire de la doc pour faire des plugins
-    
+
 V2
 imagemash.py
     ajouter la fonction pour enregistrer la liste daction

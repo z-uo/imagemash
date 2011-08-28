@@ -26,7 +26,7 @@ import math
 
 from plugsubclass import Viewer
 from plugsubclass import Painting
-from rect import Rect
+from plugsubclass import Line
 
 ### plugin infos #######################################################
 NAME = "rotation"
@@ -43,7 +43,7 @@ class ExecDialog(QtGui.QDialog):
         self.setWindowTitle("rotation")
         self.parent = parent
         self.codeBefore = code
-        
+
         ### widget #####################################################
         ### image ###
         self.imW = QtGui.QComboBox(self)
@@ -60,11 +60,11 @@ class ExecDialog(QtGui.QDialog):
             self.color = QtGui.QColor(0, 0, 0)
         self.colorIcon = QtGui.QPixmap(22, 22)
         self.colorIcon.fill(self.color)
-        
+
         self.colorW = QtGui.QToolButton(self)
         self.colorW.setAutoRaise(True)
         self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
-        
+
         ### zoom buttons ###
         self.zoomInW = QtGui.QToolButton()
         self.zoomInW.setAutoRaise(True)
@@ -84,21 +84,23 @@ class ExecDialog(QtGui.QDialog):
         self.rotate180W = QtGui.QToolButton()
         self.rotate180W.setAutoRaise(True)
         self.rotate180W.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/180.svg")))
-        
+
         ### labels info ###
-        self.degreL = QtGui.QLabel("degre")
+        self.angle = 0
+        self.degreL = QtGui.QLabel("angle :")
         self.degreW = QtGui.QLineEdit("0")
         self.degreW.setValidator(QtGui.QIntValidator(self.degreW))
-        
+        self.degreW.setDisabled(True)
+
         ### action ###
         self.actionW = QtGui.QComboBox(self)
         self.actionW.addItem("tracer horizontal")
         self.actionW.addItem("tracer vertical")
         self.actionW.addItem("entrer angle")
-        
+
         ### apercu ###
         self.apercuW = QtGui.QPushButton("apercu")
-        
+
         ### viewer ###
         self.painting = Painting(self)
         if args:
@@ -107,30 +109,30 @@ class ExecDialog(QtGui.QDialog):
             self.painting.set_fig(Line(self.painting, args), self.color)
         self.viewer = Viewer(self)
         self.viewer.setWidget(self.painting)
-        
+
         ### apply, undo ###
         self.okW = QtGui.QPushButton('apply', self)
         self.undoW = QtGui.QPushButton('undo', self)
-        
+
         ### function ###################################################
         self.im_changed(self.images[0])
-        
+
         ### connexion ##################################################
         self.imW.activated[str].connect(self.im_changed)
-        
-        self.actionW.activated[str].connect(self.action_changed) 
+
+        self.actionW.activated[str].connect(self.action_changed)
         self.degreW.textChanged.connect(self.degre_changed)
         self.apercuW.clicked.connect(self.apercu_clicked)
-        
+
         self.okW.clicked.connect(self.ok_clicked)
         self.undoW.clicked.connect(self.undo_clicked)
-        
+
         self.zoomInW.clicked.connect(self.zoom_in)
         self.viewer.zoomIn.connect(self.zoom_in)
         self.zoomOutW.clicked.connect(self.zoom_out)
         self.viewer.zoomOut.connect(self.zoom_out)
         self.zoomOneW.clicked.connect(self.zoom_one)
-        
+
         ### args #######################################################
         if args:
             pass
@@ -147,49 +149,49 @@ class ExecDialog(QtGui.QDialog):
         toolBox.addWidget(self.rotate270W)
         toolBox.addWidget(self.rotate180W)
         toolBox.addStretch(0)
-        
+
         grid = QtGui.QGridLayout()
         grid.setSpacing(2)
-        
+
         grid.addWidget(self.imW, 0, 0)
         grid.addLayout(toolBox, 1, 0)
-        
+
         grid.addWidget(self.actionW, 0, 1)
-        
-        grid.addWidget(self.degreL, 1, 1)
+
+        grid.addWidget(self.degreL, 0, 2)
         grid.addWidget(self.degreW, 1, 2)
-        
+
         grid.addWidget(self.apercuW, 1, 3)
-        
+
         ### ok, undo ###
         okBox = QtGui.QHBoxLayout()
         okBox.addStretch(0)
         okBox.addWidget(self.okW)
         okBox.addWidget(self.undoW)
-        
+
         ### layout ###
         layout = QtGui.QVBoxLayout()
         layout.setSpacing(2)
         layout.addLayout(grid)
         layout.addWidget(self.viewer)
         layout.addLayout(okBox)
-        
+
         self.setLayout(layout)
         #~ self.exec_()
-        
+
     def zoom_in(self):
         self.painting.zoom(2.0)
-        
+
     def zoom_out(self):
         self.painting.zoom(0.5)
-        
+
     def zoom_one(self):
         self.painting.zoom(0)
-        
+
     def im_changed(self, text):
         im = self.images[self.imW.currentIndex()]
         self.painting.change_image(im, self.codeBefore)
-                    
+
     def color_clicked(self):
         self.color = QtGui.QColorDialog.getColor(self.color)
         if self.color.isValid():
@@ -197,38 +199,61 @@ class ExecDialog(QtGui.QDialog):
             self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
             self.painting.color = self.color
         self.painting.draw()
-        
+
     def action_changed(self, text):
         if self.actionW.currentIndex() == 0:
-            print("degre")
+            print("ligne horizontale")
+            self.degreW.setDisabled(True)
+            self.painting.fig.setDisabled(False)
         elif self.actionW.currentIndex() == 1:
-            print("ligne")
-    
+            print("ligne verticale")
+            self.degreW.setDisabled(True)
+            self.painting.fig.setDisabled(False)
+        elif self.actionW.currentIndex() == 2:
+            print("angle")
+            self.degreW.setDisabled(False)
+            self.painting.fig.setDisabled(True)
+        self.painting.draw()
+
     def apercu_clicked(self):
-        x1 = self.painting.fig.x1
-        y1 = self.painting.fig.y1
-        x2 = self.painting.fig.x2
-        y2 = self.painting.fig.y2
-        print(x1 - x2)
-        print(y2 - y1)
-        hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
-        print("hypotenuse : %s" %(hypotenuse))
-        cos = (x2 - x1) / hypotenuse
-        print("cos : %s" %(cos))
-        angle = math.degrees(math.acos(cos))
-        if y2 < y1 :
-            angle = -angle
-        print("angle : %s" %(angle))
-    
+        if self.actionW.currentIndex() == 0:
+            x1 = self.painting.fig.x1
+            y1 = self.painting.fig.y1
+            x2 = self.painting.fig.x2
+            y2 = self.painting.fig.y2
+            hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
+            cos = (x2 - x1) / hypotenuse
+            angle = math.degrees(math.acos(cos))
+            if y2 < y1 :
+                angle = -angle
+            self.angle = -angle + self.angle
+            self.degreW.setText(str(self.angle))
+        elif self.actionW.currentIndex() == 1:
+            pass
+        elif self.actionW.currentIndex() == 2:
+            self.angle = float(self.degreW.text())
+
+        code = """matrix = QtGui.QMatrix()
+matrix.rotate(%s)
+$i = $i.transformed(matrix, QtCore.Qt.FastTransformation)""" %(self.angle,)
+        print(code)
+        self.painting.apply_rotation(code)
+        self.painting.fig.hide()
+        #self.painting.fig.setDisabled(True)
+        self.painting.draw()
+        # ajouter angle aux bouton d'angle
+        # tourner l'image
+        # enlever ligne
+
     def degre_changed(self):
         pass
-        
+
     def ok_clicked(self):
         self.accept()
-    
+
     def undo_clicked(self):
         self.reject()
-    
+
     def get_return(self):
         if self.result():
             x = self.painting.fig.x
@@ -254,20 +279,26 @@ w = %s h = %s""" %(desc, outW, outH)
             # (windows args), (fig args)
             # (action, w, h, color, x, y, w, h, zoom)
             args = (self.actionW.currentIndex(),
-                     int(self.wW.text()), 
-                     int(self.hW.text(), 
-                     self.painting.zoomN, 
-                     self.color, 
+                     int(self.wW.text()),
+                     int(self.hW.text()),
+                     self.painting.zoomN,
+                     self.color,
                      (x, y, w, h))
             return True , code, desc, args
         else:
             return False, None, None, None
-            
-def test():
-	print("ok")
+
 if __name__=="__main__":
-    image = "media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
+    image = "/media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     win = ExecDialog([image])
     win.show()
     sys.exit(app.exec_())
+
+# bouton apercu > montre l'image, imp de refaire trait
+#                                 poss de changer l'angle
+#        annuler > conserve l'angle, remet l'image a zero
+
+# bouton apercu > montre l'image, peut refaire un trait
+# rapuit          refait sur l'image originale
+#

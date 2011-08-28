@@ -30,42 +30,43 @@ class Item(QtGui.QStandardItem):
         self.args = None
         if copy:
             self.info = copy
-        
+
     def setCode(self, text):
         self.code = text
     def getCode(self):
         return self.code
-        
+
     def setDesc(self, text):
         self.desc = text
     def getDesc(self):
         return self.desc
-        
+
     def setArgs(self, text):
         self.args = text
     def getArgs(self):
         return self.args
-        
+
+
 class DragDropListWidget(QtGui.QListView):
     """ QListView acceptant un fichier en drop """
     dropped = QtCore.pyqtSignal(list)
     def __init__(self, parent=None):
         QtGui.QListView.__init__(self, parent)
         self.setAcceptDrops(True)
-        
+
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
             event.accept()
         else:
             event.ignore()
- 
+
     def dragMoveEvent(self, event):
         if event.mimeData().hasUrls:
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
         else:
             event.ignore()
- 
+
     def dropEvent(self, event):
         if event.mimeData().hasUrls:
             event.setDropAction(QtCore.Qt.CopyAction)
@@ -76,7 +77,6 @@ class DragDropListWidget(QtGui.QListView):
             self.dropped.emit(l)
         else:
             event.ignore()
-            
 
 
 class TextEditDialog(QtGui.QDialog):
@@ -84,11 +84,11 @@ class TextEditDialog(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("edit code")
         self.parent = parent
-        
+
         ### editeur de code ###
         self.codeEdit = QtGui.QTextEdit()
         self.codeEdit.setText(code)
-        
+
         ### infos ###
         self.info = QtGui.QLabel("$i: QImage")
         ### appliquer ###
@@ -97,25 +97,25 @@ class TextEditDialog(QtGui.QDialog):
         ### annuler ###
         self.undoW = QtGui.QPushButton('annuler', self)
         self.undoW.clicked.connect(self.undoClicked)
-        
+
         hBox = QtGui.QHBoxLayout()
         hBox.addWidget(self.okW)
         hBox.addWidget(self.undoW)
-        
+
         vBox = QtGui.QVBoxLayout()
         vBox.addWidget(self.codeEdit)
         vBox.addWidget(self.info)
         vBox.addLayout(hBox)
-        
+
         self.setLayout(vBox)
         self.exec_()
-        
+
     def getReturn(self):
         if self.result():
             return True, str(self.codeEdit.toPlainText())
         else:
             return False, None
-            
+
     def okClicked(self):
         self.accept()
     def undoClicked(self):
@@ -129,7 +129,7 @@ class ApplyDialog(QtGui.QDialog):
         self.setWindowTitle(_("apply code"))
         self.quit = False
         self.fin = False
-        
+
         ### progress bar
         self.barre = QtGui.QProgressBar(self)
         self.barre.setRange(0, len(images))
@@ -141,17 +141,17 @@ class ApplyDialog(QtGui.QDialog):
         ### quit ###
         self.quitW = QtGui.QPushButton(_("quit"), self)
         self.quitW.clicked.connect(self.quitClicked)
-        
+
         ### text edit ###
         self.errorW = QtGui.QTextEdit()
         self.errorW.setReadOnly(True)
-        
+
         ### thread ###
         self.applyThread = Apply(rep, fn, code, images)
         self.applyThread.infoBatch.connect(self.infoBatch)
         self.applyThread.finBatch.connect(self.finBatch)
         self.applyThread.start()
-        
+
         ### layout ###
         toolBox = QtGui.QHBoxLayout()
         toolBox.addStretch(0)
@@ -163,15 +163,15 @@ class ApplyDialog(QtGui.QDialog):
         vBox.addLayout(toolBox)
         self.setLayout(vBox)
         self.exec_()
-        
+
     def stopClicked(self):
         self.applyThread.stop = True
         self.stopW.setDisabled(True)
-        
+
     def infoBatch(self, info):
         self.barre.setValue(info[0])
         self.errorW.setText(info[1])
-        
+
     def finBatch(self, truc):
         if self.quit:
             self.applyThread.quit()
@@ -188,7 +188,7 @@ class ApplyDialog(QtGui.QDialog):
         else:
             self.applyThread.stop = True
             self.quit = True
-            
+
     def closeEvent(self, event):
         if self.fin:
             self.applyThread.quit()
@@ -212,7 +212,7 @@ class Apply(QtCore.QThread):
         self.images = images
         self.error = ""
         self.stop = False
-        
+
     def run(self):
         if not os.path.isdir(self.rep):
             try:
@@ -221,8 +221,8 @@ class Apply(QtCore.QThread):
                 self.error = "%sle repertoire(%s) n'as pas pu etre créé\n" %(self.error, rep)
                 self.infoBatch.emit((0, self.error))
                 return
-                
-        n = 0   
+
+        n = 0
         im = QtGui.QImage()
         for i in self.images:
             n = n + 1
@@ -243,7 +243,7 @@ class Apply(QtCore.QThread):
                         self.infoBatch.emit((n-1, self.error))
                         continue
                 else: break
-                    
+
                 ### execution du code ###
                 if not self.stop:
                     try:
@@ -253,7 +253,7 @@ class Apply(QtCore.QThread):
                         self.infoBatch.emit((n-1, self.error))
                         continue
                 else: break
-                
+
                 ### enregistrement de l'image ###
                 if not self.stop:
                     if im.save(fn):
