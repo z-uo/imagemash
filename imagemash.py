@@ -29,6 +29,7 @@ from PyQt4 import QtCore
 from subclass import Item
 from subclass import DragDropListWidget
 from subclass import TextEditDialog
+from subclass import ApplyDialog
 from preview import PrevDialog
 from funct import verif_images
 from funct import return_new_filename

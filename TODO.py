@@ -3,16 +3,16 @@
 #
 V1
 general
-    voir comment utiliser des classes dautres modules
+    creer les widgets dans l ordre pour pouvoir naviguer au clavier
 README
     a reecrire
 imagemash.py
     revoir qthread
     #ajouter un bouton pour modifier une action
     #revoir les descriptions / code DONE: probleme avec exec
-    ajouter des labels anciens nom / nouveau nom
+    #ajouter des labels anciens nom / nouveau nom
     #ajouter des noms aux fenetres
-    ouvrir la fenetre déedition d action quand elle est ajoutee
+    #ouvrir la fenetre déedition d action quand elle est ajoutee
 
 plugin_crop
 	expliquer erreur keep aspect ratio

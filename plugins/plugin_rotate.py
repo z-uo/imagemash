@@ -39,6 +39,7 @@ VERSION = 0.1
 ########################################################################
 class ExecDialog(QtGui.QDialog):
     def __init__(self, images, args=None, code="", parent=None):
+        print("hop")
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("rotation")
         self.parent = parent
@@ -53,6 +54,17 @@ class ExecDialog(QtGui.QDialog):
             self.imW.addItem(f)
             self.images.append(v)
 
+        ### zoom buttons ###
+        self.zoomInW = QtGui.QToolButton()
+        self.zoomInW.setAutoRaise(True)
+        self.zoomInW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_in.svg")))
+        self.zoomOutW = QtGui.QToolButton()
+        self.zoomOutW.setAutoRaise(True)
+        self.zoomOutW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_out.svg")))
+        self.zoomOneW = QtGui.QToolButton()
+        self.zoomOneW.setAutoRaise(True)
+        self.zoomOneW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_one.svg")))
+
         ### couleur ###
         if args:
             self.color = args[4]
@@ -65,16 +77,13 @@ class ExecDialog(QtGui.QDialog):
         self.colorW.setAutoRaise(True)
         self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
 
-        ### zoom buttons ###
-        self.zoomInW = QtGui.QToolButton()
-        self.zoomInW.setAutoRaise(True)
-        self.zoomInW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_in.svg")))
-        self.zoomOutW = QtGui.QToolButton()
-        self.zoomOutW.setAutoRaise(True)
-        self.zoomOutW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_out.svg")))
-        self.zoomOneW = QtGui.QToolButton()
-        self.zoomOneW.setAutoRaise(True)
-        self.zoomOneW.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/black_zoom_one.svg")))
+        ### action ###
+        self.actionW = QtGui.QComboBox(self)
+        self.actionW.addItem("tracer horizontal")
+        self.actionW.addItem("tracer vertical")
+        self.actionW.addItem("entrer angle")
+
+        ### rotate 90, 180, 370 ###
         self.rotate90W = QtGui.QToolButton()
         self.rotate90W.setAutoRaise(True)
         self.rotate90W.setIcon(QtGui.QIcon(QtGui.QPixmap("icons/90.svg")))
@@ -92,17 +101,11 @@ class ExecDialog(QtGui.QDialog):
         self.degreW.setValidator(QtGui.QIntValidator(self.degreW))
         self.degreW.setDisabled(True)
 
-        ### action ###
-        self.actionW = QtGui.QComboBox(self)
-        self.actionW.addItem("tracer horizontal")
-        self.actionW.addItem("tracer vertical")
-        self.actionW.addItem("entrer angle")
+        ### reset ###
+        self.resetW = QtGui.QPushButton("reset")
 
         ### apercu ###
         self.apercuW = QtGui.QPushButton("apercu")
-
-        ### reset ###
-        self.resetW = QtGui.QPushButton("reset")
 
         ### viewer ###
         self.painting = Painting(self)
@@ -122,6 +125,11 @@ class ExecDialog(QtGui.QDialog):
 
         ### connexion ##################################################
         self.imW.activated[str].connect(self.im_changed)
+
+        self.rotate90W.clicked.connect(self.rot90)
+        self.rotate180W.clicked.connect(self.rot180)
+        self.rotate270W.clicked.connect(self.rot270)
+        self.colorW.clicked.connect(self.color_clicked)
 
         self.actionW.activated[str].connect(self.action_changed)
         self.degreW.textChanged.connect(self.degre_changed)
@@ -158,7 +166,7 @@ class ExecDialog(QtGui.QDialog):
         grid.setSpacing(2)
 
         grid.addWidget(self.imW, 0, 0)
-        grid.addLayout(toolBox, 1, 0)
+        grid.addLayout(toolBox, 1, 0, 1, 2)
 
         grid.addWidget(self.actionW, 0, 1)
 
@@ -182,7 +190,7 @@ class ExecDialog(QtGui.QDialog):
         layout.addLayout(okBox)
 
         self.setLayout(layout)
-        #~ self.exec_()
+        self.exec_()
 
     def zoom_in(self):
         self.painting.zoom(2.0)
@@ -204,6 +212,21 @@ class ExecDialog(QtGui.QDialog):
             self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
             self.painting.color = self.color
         self.painting.draw()
+
+    def rot90(self):
+        self.angle = self.angle + 90
+        self.display_deg()
+        self.rotate()
+
+    def rot180(self):
+        self.angle = self.angle + 180
+        self.display_deg()
+        self.rotate()
+
+    def rot270(self):
+        self.angle = self.angle + 270
+        self.display_deg()
+        self.rotate()
 
     def action_changed(self, text):
         if self.actionW.currentIndex() == 0:
@@ -234,7 +257,7 @@ class ExecDialog(QtGui.QDialog):
             if x2 < x1 :
                 angle = angle - 180
             self.angle = self.angle - angle
-            self.degreW.setText(str(self.angle))
+            self.display_deg()
 
         elif self.actionW.currentIndex() == 1:
             x1, x2 = self.painting.fig.x1, self.painting.fig.x2
@@ -247,28 +270,35 @@ class ExecDialog(QtGui.QDialog):
             if y2 < y1 :
                 angle = angle - 180
             self.angle = self.angle - angle
-            self.degreW.setText(str(self.angle))
+            self.display_deg()
 
         elif self.actionW.currentIndex() == 2:
             self.angle = float(self.degreW.text())
+            self.display_deg()
+        self.rotate()
 
+    def rotate(self):
         if self.angle != 0:
-            code = """matrix = QtGui.QMatrix()
+            code = """
+matrix = QtGui.QMatrix()
 matrix.rotate(%s)
 $i = $i.transformed(matrix, QtCore.Qt.FastTransformation)""" %(self.angle,)
             self.painting.fig.hide()
             self.painting.apply_rotation(code)
         else:
             self.painting.reset()
-        #self.painting.fig.setDisabled(True)
-        # ajouter angle aux bouton d'angle
-        # tourner l'image
-        # enlever ligne
 
     def reset_clicked(self):
         self.painting.reset()
         self.degreW.setText("0")
         self.angle = 0
+
+    def display_deg(self):
+        while self.angle >= 360:
+            self.angle -= 360
+        while self.angle <= -360:
+            self.angle += 360
+        self.degreW.setText(str(self.angle))
 
     def degre_changed(self):
         pass
@@ -317,8 +347,7 @@ if __name__=="__main__":
     image = "/media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     win = ExecDialog([image])
-    win.show()
-    sys.exit(app.exec_())
+    app.exec_()
 
 # bouton apercu > montre l'image, imp de refaire trait
 #                                 poss de changer l'angle

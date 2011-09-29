@@ -18,8 +18,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with imagemash.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from funct import return_new_filename
 
 class Item(QtGui.QStandardItem):
     def __init__(self, parent=None, copy=False):
@@ -208,7 +210,7 @@ class Apply(QtCore.QThread):
         super(Apply, self).__init__(parent)
         self.rep = rep
         self.fn = fn
-        self.code = code.replace("$i", "im")
+        self.code = code.replace("$i", "self.im")
         self.images = images
         self.error = ""
         self.stop = False
@@ -223,7 +225,7 @@ class Apply(QtCore.QThread):
                 return
 
         n = 0
-        im = QtGui.QImage()
+        self.im = QtGui.QImage()
         for i in self.images:
             n = n + 1
             fn = return_new_filename(os.path.split(i)[1], self.fn, n)
@@ -236,7 +238,7 @@ class Apply(QtCore.QThread):
             else:
                 ### ouverture de l'image ###
                 if not self.stop:
-                    if im.load(i):
+                    if self.im.load(i):
                         pass
                     else:
                         self.error = "%simage illisible\n" %(self.error,)
@@ -256,7 +258,7 @@ class Apply(QtCore.QThread):
 
                 ### enregistrement de l'image ###
                 if not self.stop:
-                    if im.save(fn):
+                    if self.im.save(fn):
                         self.error = "%s%s\n" %(self.error, i)
                         self.infoBatch.emit((n, self.error))
                     else:
