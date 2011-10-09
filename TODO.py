@@ -13,7 +13,8 @@ imagemash.py
     #ajouter des labels anciens nom / nouveau nom
     #ajouter des noms aux fenetres
     #ouvrir la fenetre déedition d action quand elle est ajoutee
-
+pugsubclass.viewer
+    zoom a la taille de la fenetre
 plugin_crop
 	expliquer erreur keep aspect ratio
 	revoir les scrollbars dans plugsubclass.viewer

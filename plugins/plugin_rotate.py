@@ -39,7 +39,6 @@ VERSION = 0.1
 ########################################################################
 class ExecDialog(QtGui.QDialog):
     def __init__(self, images, args=None, code="", parent=None):
-        print("hop")
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("rotation")
         self.parent = parent
@@ -67,7 +66,7 @@ class ExecDialog(QtGui.QDialog):
 
         ### couleur ###
         if args:
-            self.color = args[4]
+            self.color = args["color"]
         else:
             self.color = QtGui.QColor(0, 0, 0)
         self.colorIcon = QtGui.QPixmap(22, 22)
@@ -109,10 +108,7 @@ class ExecDialog(QtGui.QDialog):
 
         ### viewer ###
         self.painting = Painting(self)
-        if args:
-            self.painting.set_fig(Line(self.painting, args[5]), self.color)
-        else:
-            self.painting.set_fig(Line(self.painting, args), self.color)
+        self.painting.set_fig(Line(self.painting), self.color)
         self.viewer = Viewer(self)
         self.viewer.setWidget(self.painting)
 
@@ -147,7 +143,11 @@ class ExecDialog(QtGui.QDialog):
 
         ### args #######################################################
         if args:
-            pass
+            self.actionW.setCurrentIndex(args["action"])
+            self.action_changed()
+            self.painting.zoomN = args["zoom"]
+            self.angle = args["angle"]
+            self.apercu_clicked(self.angle)
         else:
             pass
 
@@ -206,76 +206,71 @@ class ExecDialog(QtGui.QDialog):
         self.painting.change_image(im, self.codeBefore)
 
     def color_clicked(self):
-        self.color = QtGui.QColorDialog.getColor(self.color)
-        if self.color.isValid():
+        color = QtGui.QColorDialog.getColor(self.color)
+        if color.isValid():
+            self.color = color
             self.colorIcon.fill(self.color)
             self.colorW.setIcon(QtGui.QIcon(self.colorIcon))
             self.painting.color = self.color
         self.painting.draw()
 
     def rot90(self):
-        self.angle = self.angle + 90
-        self.display_deg()
-        self.rotate()
+        self.apercu_clicked(self.angle + 90)
 
     def rot180(self):
-        self.angle = self.angle + 180
-        self.display_deg()
-        self.rotate()
+        self.apercu_clicked(self.angle + 180)
 
     def rot270(self):
-        self.angle = self.angle + 270
-        self.display_deg()
-        self.rotate()
+        self.apercu_clicked(self.angle + 270)
 
-    def action_changed(self, text):
+    def action_changed(self, text=None):
         if self.actionW.currentIndex() == 0:
-            print("ligne horizontale")
             self.degreW.setDisabled(True)
             self.painting.fig.setDisabled(False)
-            self.reset_clicked()
         elif self.actionW.currentIndex() == 1:
-            print("ligne verticale")
             self.degreW.setDisabled(True)
             self.painting.fig.setDisabled(False)
-            self.reset_clicked()
         elif self.actionW.currentIndex() == 2:
-            print("angle")
             self.degreW.setDisabled(False)
             self.painting.fig.setDisabled(True)
         self.painting.draw()
 
-    def apercu_clicked(self):
-        if self.actionW.currentIndex() == 0:
-            x1, x2 = self.painting.fig.x1, self.painting.fig.x2
-            y1, y2 = self.painting.fig.y1, self.painting.fig.y2
-            hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
-            cos = (x2 - x1) / hypotenuse
-            angle = math.degrees(math.acos(cos))
-            if y2 < y1 :
-                angle = -angle
-            if x2 < x1 :
-                angle = angle - 180
-            self.angle = self.angle - angle
-            self.display_deg()
+    def apercu_clicked(self, angle=False):
+        angle = angle or self.return_angle()
+        self.angle = self.display_deg(angle)
+        self.degreW.setText(str(self.angle))
+        self.rotate()
 
-        elif self.actionW.currentIndex() == 1:
-            x1, x2 = self.painting.fig.x1, self.painting.fig.x2
-            y1, y2 = self.painting.fig.y1, self.painting.fig.y2
-            hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
-            cos = (y2 - y1) / hypotenuse
-            angle = math.degrees(math.acos(cos))
-            if x1 < x2 :
-                angle = -angle
-            if y2 < y1 :
-                angle = angle - 180
-            self.angle = self.angle - angle
-            self.display_deg()
+    def return_angle(self):
+        angle = self.angle
+        if self.actionW.currentIndex() == 0 and self.painting.fig.visible:
+                x1, x2 = self.painting.fig.x1, self.painting.fig.x2
+                y1, y2 = self.painting.fig.y1, self.painting.fig.y2
+                hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
+                cos = (x2 - x1) / hypotenuse
+                angle = math.degrees(math.acos(cos))
+                if y2 < y1 :
+                    angle = -angle
+                if x2 < x1 :
+                    angle = angle - 180
+                angle = self.angle - angle
+
+        elif self.actionW.currentIndex() == 1 and self.painting.fig.visible:
+            if self.painting.fig.visible:
+                x1, x2 = self.painting.fig.x1, self.painting.fig.x2
+                y1, y2 = self.painting.fig.y1, self.painting.fig.y2
+                hypotenuse = math.sqrt(((x2 - x1)*(x2 - x1)) + ((y1 - y2)*(y1 - y2)))
+                cos = (y2 - y1) / hypotenuse
+                angle = math.degrees(math.acos(cos))
+                if x1 < x2 :
+                    angle = -angle
+                if y2 < y1 :
+                    angle = angle - 180
+                angle = self.angle - angle
 
         elif self.actionW.currentIndex() == 2:
-            self.angle = float(self.degreW.text())
-            self.display_deg()
-        self.rotate()
+            angle = float(self.degreW.text())
+        return angle
 
     def rotate(self):
         if self.angle != 0:
@@ -293,12 +288,12 @@ $i = $i.transformed(matrix, QtCore.Qt.FastTransformation)""" %(self.angle,)
         self.degreW.setText("0")
         self.angle = 0
 
-    def display_deg(self):
-        while self.angle >= 360:
-            self.angle -= 360
-        while self.angle <= -360:
-            self.angle += 360
-        self.degreW.setText(str(self.angle))
+    def display_deg(self, angle=0):
+        while angle >= 360:
+            angle -= 360
+        while angle <= -360:
+            angle += 360
+        return angle
 
     def degre_changed(self):
         pass
@@ -311,48 +306,25 @@ $i = $i.transformed(matrix, QtCore.Qt.FastTransformation)""" %(self.angle,)
 
     def get_return(self):
         if self.result():
-            x = self.painting.fig.x
-            y = self.painting.fig.y
-            w = self.painting.fig.w
-            h = self.painting.fig.h
-            if self.painting.fig.exist:
-                code = "$i = $i.copy(%s, %s, %s, %s)" %(x, y, w, h)
-                desc = """x = %s y = %s
-w = %s h = %s""" %(x, y, w, h)
-
-                if self.actionW.currentIndex() == 2: #keep aspect ratio and resize
-                    outW = self.painting.fig.outW
-                    outH = self.painting.fig.outH
-                    code = """%s
-$i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)""" %(code, outW, outH)
-                    desc = """%s
-resized to:
-w = %s h = %s""" %(desc, outW, outH)
+            self.angle = self.display_deg(self.return_angle())
+            if self.angle != 0:
+                code = """
+matrix = QtGui.QMatrix()
+matrix.rotate(%s)
+$i = $i.transformed(matrix, QtCore.Qt.SmoothTransformation)""" %(self.angle,)
             else:
                 code = ""
-                desc = ""
-            # (windows args), (fig args)
-            # (action, w, h, color, x, y, w, h, zoom)
-            args = (self.actionW.currentIndex(),
-                     int(self.wW.text()),
-                     int(self.hW.text()),
-                     self.painting.zoomN,
-                     self.color,
-                     (x, y, w, h))
+            desc = "angle = %s" %(self.angle,)
+            args = {"action": self.actionW.currentIndex(),
+                    "color": self.color,
+                    "zoom": self.painting.zoomN,
+                    "angle": self.angle,}
             return True , code, desc, args
         else:
             return False, None, None, None
 
 if __name__=="__main__":
-    image = "/media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
+    image = "../test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     win = ExecDialog([image])
     app.exec_()
-
-# bouton apercu > montre l'image, imp de refaire trait
-#                                 poss de changer l'angle
-#        annuler > conserve l'angle, remet l'image a zero
-
-# bouton apercu > montre l'image, peut refaire un trait
-# rapuit          refait sur l'image originale
-#

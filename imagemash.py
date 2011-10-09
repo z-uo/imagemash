@@ -21,7 +21,6 @@
 import sys
 import os
 import imp
-import re
 import gettext
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -82,7 +81,7 @@ class ImgTab(QtGui.QWidget):
 
     def add_images_clicked(self):
         """ boite de dialogue d'ajout d'images """
-        url = QtGui.QFileDialog.getOpenFileNames(self,_("add images"),
+        url = QtGui.QFileDialog.getOpenFileNames(self, _("add images"),
                 "", _("""Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif
                                  *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)
                                  ;;All files (*)"""))
@@ -93,7 +92,7 @@ class ImgTab(QtGui.QWidget):
             ainsi que les miniatures enregistrées """
         sel = self.imgList.selectionModel().selectedIndexes()
         for i in sel:
-            self.delete_thumbnail(i.data().toString())
+            self.delete_thumbnail(i.data())
             self.modImgList.removeRow(i.row())
 
     def add_images(self, url=[]):
@@ -237,7 +236,7 @@ class ActionTab(QtGui.QWidget):
             nItem = Item(sel.data(), item.info)
             self.modActionList.appendRow(nItem)
             #select and edit item
-            self.actionList.setCurrentIndex(self.modActionList.index(self.modActionList.rowCount()-1,0))
+            self.actionList.setCurrentIndex(self.modActionList.index(self.modActionList.rowCount()-1, 0))
             self.edit_action()
 
     def remove_action(self):
@@ -256,10 +255,9 @@ class ActionTab(QtGui.QWidget):
         else:
             self.labelActionDesc.setText("")
 
-    def edit_action(self, text=''):
+    def edit_action(self, text=""):
         """ lance le plugin selectionné
             et enregistre le retour"""
-        print("plop")
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
         exec("""ok, code, desc, args = %s.ExecDialog(self.parent.imgTab.return_imgs(),
@@ -443,7 +441,7 @@ class MainDialog(QtGui.QDialog):
             self.save_enter.emit()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     ### import des images ##############################################
     if len(sys.argv) == 1:
         sys.argv.append("test/imgs")

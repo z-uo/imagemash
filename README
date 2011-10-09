@@ -1,17 +1,22 @@
 IMAGEMASH
 by pops
 
-an image batch processor written in python and pyqt 
-with some cool thing such as preview and interactive tools
+Imagemash is an image batch processor developed with Python an Qt.
 
-it is released under the GNU GPL V3
+It is released under the GNU GPL V3
+It is under development.
+There are 4 plug-in now:
+    a crop plug-in
+    a resize plug-in
+    a flip/rotate plug-in
+    a free rotate plug-in
 
-the software is in developement
-there are only 3 plugin working now:
-    a crop plugin
-    a resize plugin
-    a flip/rotate plugin
+You can use it alone or with nautilus or thunar.
 
-Thunar custom action:
-xterm -hold -e "python3 /media/donees/programation/imagemash/imagemash.py %F"
+Nautilus:
+use the script shell "imagemash-nautilus"
 
+Thunar:
+edit/custom action/add
+and copy the following command: "python3 /path/to/imagemash.py %F"
+or "xterm -hold -e "python3 /media/donnees/programation/imagemash/imagemash.py %F"" to start it in a terminal
