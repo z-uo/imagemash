@@ -1,7 +1,9 @@
 #!/bin/bash
-# TODO: prendre toutes les images du dossier si aucun fichier n'est selectionné
 quoted=$(echo -e "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" | awk 'BEGIN {
 FS = "\n" } { printf "\"%s\" ", $1 }' | sed -e s#\"\"##)
 #eval "your-program $quoted"
 
-xterm -hold -e "python /home/pops/imagemash/imagemash.py $quoted"
+eval "python3 /path/to/imagemash.py $quoted"
+
+
+#xterm -hold -e "python3 /path/to/imagemash.py $quoted"

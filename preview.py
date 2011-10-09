@@ -26,7 +26,7 @@ from PyQt4 import QtCore
 from plugins.plugsubclass import Viewer
 from plugins.plugsubclass import Painting
 
-        
+
 ########################################################################
 class PrevDialog(QtGui.QDialog):
     def __init__(self, images, code="", parent=None):
@@ -34,7 +34,7 @@ class PrevDialog(QtGui.QDialog):
         self.parent = parent
         self.setWindowTitle("preview")
         self.codeBefore = code
-        
+
         ### widget #####################################################
         ### image ###
         self.imW = QtGui.QComboBox(self)
@@ -57,22 +57,22 @@ class PrevDialog(QtGui.QDialog):
         self.zoomOneW.setAutoRaise(True)
         self.zoomOneW.setIcon(QtGui.QIcon(
                               QtGui.QPixmap("icons/black_zoom_one.svg")))
-        
+
         ### viewer ###
         self.painting = Painting(self)
         self.viewer = Viewer(self)
         self.viewer.setWidget(self.painting)
-        
+
         ### apply, undo ###
         self.okW = QtGui.QPushButton('ok', self)
-        
+
         ### function ###################################################
         self.im_changed(self.images[0])
-        
+
         ### connexion ##################################################
         self.imW.activated[str].connect(self.im_changed)
         self.okW.clicked.connect(self.ok_clicked)
-        
+
         self.zoomInW.clicked.connect(self.zoom_in)
         self.viewer.zoomIn.connect(self.zoom_in)
         self.zoomOutW.clicked.connect(self.zoom_out)
@@ -87,35 +87,35 @@ class PrevDialog(QtGui.QDialog):
         toolBox.addWidget(self.zoomOutW)
         toolBox.addWidget(self.zoomOneW)
         toolBox.addStretch(0)
-        
+
         ### ok, undo ###
         okBox = QtGui.QHBoxLayout()
         okBox.addStretch(0)
         okBox.addWidget(self.okW)
-        
+
         ### layout ###
         layout = QtGui.QVBoxLayout()
         layout.setSpacing(2)
         layout.addLayout(toolBox)
         layout.addWidget(self.viewer)
         layout.addLayout(okBox)
-        
+
         self.setLayout(layout)
         self.exec_()
-        
+
     def zoom_in(self):
         self.painting.zoom(2.0)
-        
+
     def zoom_out(self):
         self.painting.zoom(0.5)
-        
+
     def zoom_one(self):
         self.painting.zoom(0)
-        
+
     def im_changed(self, text):
         im = self.images[self.imW.currentIndex()]
         self.painting.change_image(im, self.codeBefore)
-                    
+
     def ok_clicked(self):
         self.accept()
 

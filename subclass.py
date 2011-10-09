@@ -24,6 +24,9 @@ from PyQt4 import QtCore
 from funct import return_new_filename
 
 class Item(QtGui.QStandardItem):
+    """ a QStandartItem that can contain:
+        a piece of code, a description, and argument
+        it is used to store the action to apply on images """
     def __init__(self, parent=None, copy=False):
         QtGui.QStandardItem.__init__(self, parent)
         self.setEditable(False)
@@ -50,7 +53,7 @@ class Item(QtGui.QStandardItem):
 
 
 class DragDropListWidget(QtGui.QListView):
-    """ QListView acceptant un fichier en drop """
+    """ QListView supporting a file drop """
     dropped = QtCore.pyqtSignal(list)
     def __init__(self, parent=None):
         QtGui.QListView.__init__(self, parent)
@@ -82,22 +85,23 @@ class DragDropListWidget(QtGui.QListView):
 
 
 class TextEditDialog(QtGui.QDialog):
+    """ dialog with a text editor """
     def __init__(self, parent=None, code=""):
         QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("edit code")
         self.parent = parent
 
-        ### editeur de code ###
+        ### code edit ###
         self.codeEdit = QtGui.QTextEdit()
         self.codeEdit.setText(code)
 
         ### infos ###
         self.info = QtGui.QLabel("$i: QImage")
-        ### appliquer ###
-        self.okW = QtGui.QPushButton('appliquer', self)
+        ### apply ###
+        self.okW = QtGui.QPushButton('apply', self)
         self.okW.clicked.connect(self.okClicked)
         ### annuler ###
-        self.undoW = QtGui.QPushButton('annuler', self)
+        self.undoW = QtGui.QPushButton('undo', self)
         self.undoW.clicked.connect(self.undoClicked)
 
         hBox = QtGui.QHBoxLayout()
@@ -125,6 +129,8 @@ class TextEditDialog(QtGui.QDialog):
 
 
 class ApplyDialog(QtGui.QDialog):
+    """ dialog with info and a progress bar
+        used while applying the code on images"""
     def __init__(self, rep, fn, code, images, parent=None):
         super(ApplyDialog, self).__init__(parent)
         self.parent = parent
@@ -151,7 +157,7 @@ class ApplyDialog(QtGui.QDialog):
         ### thread ###
         self.applyThread = Apply(rep, fn, code, images)
         self.applyThread.infoBatch.connect(self.infoBatch)
-        self.applyThread.finBatch.connect(self.finBatch)
+        self.applyThread.endBatch.connect(self.endBatch)
         self.applyThread.start()
 
         ### layout ###
@@ -174,7 +180,7 @@ class ApplyDialog(QtGui.QDialog):
         self.barre.setValue(info[0])
         self.errorW.setText(info[1])
 
-    def finBatch(self, truc):
+    def endBatch(self, truc):
         if self.quit:
             self.applyThread.quit()
             self.accept()
@@ -202,10 +208,10 @@ class ApplyDialog(QtGui.QDialog):
 
 
 class Apply(QtCore.QThread):
-    """ TODO: pouvoir stopper le thread a n'importe quel moment proprement
+    """ thread used to apply the code on images
     """
     infoBatch = QtCore.pyqtSignal(tuple)
-    finBatch = QtCore.pyqtSignal(bool)
+    endBatch = QtCore.pyqtSignal(bool)
     def __init__(self, rep, fn, code, images, parent=None):
         super(Apply, self).__init__(parent)
         self.rep = rep
@@ -217,10 +223,11 @@ class Apply(QtCore.QThread):
 
     def run(self):
         if not os.path.isdir(self.rep):
+            ### create folder ###
             try:
                 os.mkdir(self.rep)
             except:
-                self.error = "%sle repertoire(%s) n'as pas pu etre créé\n" %(self.error, rep)
+                self.error = "%sthe directory (% s) can not be created\n" %(self.error, self.rep)
                 self.infoBatch.emit((0, self.error))
                 return
 
@@ -230,39 +237,39 @@ class Apply(QtCore.QThread):
             n = n + 1
             fn = return_new_filename(os.path.split(i)[1], self.fn, n)
             fn = os.path.join(self.rep, fn)
-            # verifie que le fichier n'existe pas déja
-            # a modifier pour permettre d'ecraser les fichiers
+            # verifies that the file does not exist
+            # to change to allow overwriting files
             if os.path.isfile(fn):
-                self.error = "%sle fichier (%s) existe deja\n" %(self.error, fn)
+                self.error = "%sthe file (%s) already exists\n" %(self.error, fn)
                 self.infoBatch.emit((n, self.error))
             else:
-                ### ouverture de l'image ###
+                ### open ###
                 if not self.stop:
                     if self.im.load(i):
                         pass
                     else:
-                        self.error = "%simage illisible\n" %(self.error,)
+                        self.error = "%simage unreadable\n" %(self.error,)
                         self.infoBatch.emit((n-1, self.error))
                         continue
                 else: break
 
-                ### execution du code ###
+                ### code ###
                 if not self.stop:
                     try:
                         exec(self.code)
                     except:
-                        self.error = "%scode incorrect\n" %(self.error,)
+                        self.error = "%sincorrect code\n" %(self.error,)
                         self.infoBatch.emit((n-1, self.error))
                         continue
                 else: break
 
-                ### enregistrement de l'image ###
+                ### save ###
                 if not self.stop:
                     if self.im.save(fn):
                         self.error = "%s%s\n" %(self.error, i)
                         self.infoBatch.emit((n, self.error))
                     else:
-                        self.error = "%sl'image ne peut pas etre enregistree\n" %(self.error,)
+                        self.error = "%sthe image can not be saved\n" %(self.error,)
                         self.infoBatch.emit((n-1, self.error))
                 else: break
-        self.finBatch.emit(True)
+        self.endBatch.emit(True)

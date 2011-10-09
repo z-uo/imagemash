@@ -22,25 +22,23 @@ import os
 import re
 
 def return_new_filename(orifn, fn, incr=1):
-    """ renvoi les noms de fichier
-        remplace %F par le nom de base du fichier original
-        remplace %E par l'extention du fichier original
-        remplace %III... par une incrémentation """
-    # remplace nom et extention
+    """ return filename after processing
+        replaces %F by the original filename
+        replaces %E by the original extension
+        replaces %III... by an increment """
     fn = fn.replace('%F', os.path.splitext(orifn)[0])
     fn = fn.replace('%E', os.path.splitext(orifn)[1])
-    # remplace incrementation
     for i in reversed(range(1, 15)):
         if re.search("%I{" + str(i) + "}", fn):
             fn = fn.replace("%"+("I"*i), str(incr).zfill(i))
     return fn
-    
+
 def verif_images(url):
-    """ verifie que le chemin existe et que le fichier est une image """
+    """ verify that the url is a file and that the file is an image """
     images = []
     for i in url:
         ext = os.path.splitext(i) [1].lower()
-        if (os.path.isfile(i) and 
+        if (os.path.isfile(i) and
            (ext == ".png" or ext == ".gif" or
             ext == ".jpg" or ext == ".jpeg" or
             ext == ".tif" or ext == ".tiff")):
@@ -49,7 +47,7 @@ def verif_images(url):
     return images
 
 if __name__=="__main__":
-    fichiers = [os.path.join("test/imgs", i) 
+    fichiers = [os.path.join("test/imgs", i)
                 for i in os.listdir("test/imgs")]
     print(verif_images(fichiers))
     print(return_new_filename("truc.bidule", "%Fmachin%E%IIII", 34))

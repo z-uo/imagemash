@@ -35,32 +35,32 @@ from funct import return_new_filename
 
 
 class ImgTab(QtGui.QWidget):
-    """ Classe ou sont gérées les images à traiter
-        peut prendre une liste d'url en argument """
+    """ manages the images to be processed
+        can take a list of url as argument """
     def __init__(self, parent=None, images=[]):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
         self.title = _("images")
 
-        ### modele ou sont enregistré les images ###
+        ### model to store images ###
         self.modImgList = QtGui.QStandardItemModel(0, 1)
         self.add_images(images)
 
-        ### listview ou sont affichées les images ###
+        ### listview to display images ###
         self.imgList = DragDropListWidget()
         self.imgList.setModel(self.modImgList)
         self.imgList.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.imgList.selectionModel().selectionChanged.connect(self.insert_thumbnail)
         self.imgList.dropped.connect(self.add_images)
 
-        ### Apercu d'une image ###
-        self.dicoImg = {}
-        self.apercu = QtGui.QLabel()
-        self.checkApercu = QtGui.QCheckBox(_("preview"))
-        self.checkApercu.clicked.connect(self.check_apercu)
+        ### preview thumbnail are stored in a dic ###
+        self.thumbnailDic = {}
+        self.previewW = QtGui.QLabel()
+        self.checkPreviewW = QtGui.QCheckBox(_("preview"))
+        self.checkPreviewW.clicked.connect(self.check_preview)
         self.insert_thumbnail()
 
-        ### ajout et supression d'images ###
+        ### adding and deleting images ###
         self.imgAdd = QtGui.QPushButton(_("add"))
         self.imgAdd.clicked.connect(self.add_images_clicked)
         self.imgRemove = QtGui.QPushButton(_("remove"))
@@ -69,18 +69,18 @@ class ImgTab(QtGui.QWidget):
         ### layout ###
         imgBox = QtGui.QHBoxLayout()
         imgBox.addWidget(self.imgList)
-        imgBox.addWidget(self.apercu)
+        imgBox.addWidget(self.previewW)
         toolBox = QtGui.QHBoxLayout()
         toolBox.addWidget(self.imgAdd)
         toolBox.addWidget(self.imgRemove)
-        toolBox.addWidget(self.checkApercu)
+        toolBox.addWidget(self.checkPreviewW)
         toolBox.addStretch(0)
         layout = QtGui.QVBoxLayout(self)
         layout.addLayout(imgBox)
         layout.addLayout(toolBox)
 
     def add_images_clicked(self):
-        """ boite de dialogue d'ajout d'images """
+        """ dialog for adding images """
         url = QtGui.QFileDialog.getOpenFileNames(self, _("add images"),
                 "", _("""Images (*.png *.jpeg *.jpg *.gif *.tiff *.tif
                                  *.PNG *.JPEG *.JPG *.GIF *.TIFF *.TIF)
@@ -88,15 +88,15 @@ class ImgTab(QtGui.QWidget):
         self.add_images(url)
 
     def remove_images_clicked(self):
-        """ suprimme les images selectionnées du modele
-            ainsi que les miniatures enregistrées """
+        """ delete selected images from the model
+            and the thumbnail from dic """
         sel = self.imgList.selectionModel().selectedIndexes()
         for i in sel:
             self.delete_thumbnail(i.data())
             self.modImgList.removeRow(i.row())
 
     def add_images(self, url=[]):
-        """ ajoute une image au modele """
+        """ add an image in the model """
         li = []
         for i in url:
             li.append(str(i))
@@ -105,58 +105,59 @@ class ImgTab(QtGui.QWidget):
             self.modImgList.appendRow(Item(i))
 
     def return_imgs(self):
-        """ renvoi la liste des images"""
+        """ return a list containning all images's url """
         nb = self.modImgList.rowCount()
         images = []
         for i in range(nb):
             images.append(str(self.modImgList.item(i).text()))
         return images
 
-    def check_apercu(self):
-        if self.checkApercu.isChecked():
+    def check_preview(self):
+        """ show or hide thumdnail """
+        if self.checkPreviewW.isChecked():
             self.insert_thumbnail()
         else:
-            self.apercu.clear()
+            self.previewW.clear()
 
     def insert_thumbnail(self):
-        """ insere la premiere image sélectionnée en miniature """
-        if self.checkApercu.isChecked():
+        """ insert the first selected image thumbnail """
+        if self.checkPreviewW.isChecked():
             sel = self.imgList.selectionModel().selectedIndexes()
             if sel:
                 img = sel[0].data()
-                self.apercu.setPixmap(self.create_thumbnail(img))
+                self.previewW.setPixmap(self.create_thumbnail(img))
             else:
-                self.apercu.setPixmap(self.create_thumbnail("alpha"))
+                self.previewW.setPixmap(self.create_thumbnail("alpha"))
 
-    def create_thumbnail(self, chemin="alpha"):
-        """ renvoi ou cré une miniature de l'image
-            les miniatures sont enregistrées dans self.dicoImg """
-        if chemin in self.dicoImg:
-            return self.dicoImg[chemin]
+    def create_thumbnail(self, url="alpha"):
+        """ return or create thumbnail from url
+            thumbnail are stored in self.thumbnailDic """
+        if url in self.thumbnailDic:
+            return self.thumbnailDic[url]
         else:
-            if chemin == "alpha":
+            if url == "alpha":
                 img = QtGui.QPixmap(200, 200)
                 img.fill(QtGui.QColor(0, 0, 0, 0))
             else:
-                img = QtGui.QPixmap(chemin).scaledToWidth(200)
-            self.dicoImg[chemin] = img
+                img = QtGui.QPixmap(url).scaledToWidth(200)
+            self.thumbnailDic[url] = img
             return img
 
     def delete_thumbnail(self, image):
-        """ suprime la miniature de l'image du dictionnaire """
-        if image in self.dicoImg:
-            del self.dicoImg[image]
+        """ delete thumbnail from self.thumbnailDic """
+        if image in self.thumbnailDic:
+            del self.thumbnailDic[image]
 
 
 class ActionTab(QtGui.QWidget):
-    """ classe ou sont géré les action """
+    """ manage action that will be applied on images"""
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
         self.title = _("actions")
         self.imgs = self.parent.imgTab.return_imgs()
 
-        ### action disponibles ###
+        ### available actions ###
         self.actionAvailableListLabel = QtGui.QLabel(_("available actions"))
         self.modActionAvailableList = QtGui.QStandardItemModel(0, 1)
         self.import_plugins()
@@ -165,7 +166,7 @@ class ActionTab(QtGui.QWidget):
         self.actionAvailableList.setModel(self.modActionAvailableList)
         self.actionAvailableList.doubleClicked.connect(self.add_action)
 
-        ### ajout et supression d'actions ###
+        ### adding and deleting actions ###
         self.actionAdd = QtGui.QPushButton(_("add"))
         self.actionAdd.clicked.connect(self.add_action)
         self.actionRemove = QtGui.QPushButton(_("remove"))
@@ -185,7 +186,7 @@ class ActionTab(QtGui.QWidget):
         self.previewW = QtGui.QPushButton(_("preview"))
         self.previewW.clicked.connect(self.preview)
 
-        ### description action ###
+        ### description of the selected action ###
         self.labelDesc = QtGui.QLabel(_("description"))
         self.labelPluginDesc = QtGui.QLabel("")
         self.labelActionDesc = QtGui.QLabel("")
@@ -217,8 +218,8 @@ class ActionTab(QtGui.QWidget):
         layout.addLayout(descBox, 2, 4, 2, 1)
 
     def import_plugins(self):
-        """ insere les plugin importé au lancement de l'aplication
-            dans la liste des action disponibles"""
+        """ plug-in are imported at launch
+            this function insert them in the action available list"""
         for i in importedModules:
             info = {"name": i.NAME,
                     "modname": i.MOD_NAME,
@@ -228,25 +229,25 @@ class ActionTab(QtGui.QWidget):
             self.modActionAvailableList.appendRow(Item(i.NAME, info))
 
     def add_action(self):
-        """ ajoute une action dans la liste des action a effectuer sur les images """
+        """ add an action in the list of action that will applyed on image """
         sel = self.actionAvailableList.selectionModel().selectedIndexes()[0]
         if sel:
-            #add item to the action list
+            # add item to the action list
             item = self.modActionAvailableList.itemFromIndex(sel)
             nItem = Item(sel.data(), item.info)
             self.modActionList.appendRow(nItem)
-            #select and edit item
+            # select and edit item
             self.actionList.setCurrentIndex(self.modActionList.index(self.modActionList.rowCount()-1, 0))
             self.edit_action()
 
     def remove_action(self):
-        """ suprime une action de la liste des action a effectuer sur les images """
+        """ delete an action from the list of action that will applyed on image """
         sel = self.actionList.selectionModel().selectedIndexes()
         for i in sel:
             self.modActionList.removeRow(i.row())
 
     def sel_action(self):
-        """ affiche la description de l'action selectionnée """
+        """ display the description of the selected action """
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
         self.labelPluginDesc.setText(item.info["description"])
@@ -256,8 +257,8 @@ class ActionTab(QtGui.QWidget):
             self.labelActionDesc.setText("")
 
     def edit_action(self, text=""):
-        """ lance le plugin selectionné
-            et enregistre le retour"""
+        """ launch selected plugin
+            and save what it return"""
         sel = self.actionList.selectionModel().selectedIndexes()[0]
         item = self.modActionList.itemFromIndex(sel)
         exec("""ok, code, desc, args = %s.ExecDialog(self.parent.imgTab.return_imgs(),
@@ -267,15 +268,15 @@ class ActionTab(QtGui.QWidget):
                                        %(item.info["modname"], ))
 
         if locals()['ok']:
-            item.setCode(locals()['code'])
-            item.setDesc(locals()['desc'])
-            item.setArgs(locals()['args'])
+            item.setCode(locals()['code']) # code
+            item.setDesc(locals()['desc']) # description
+            item.setArgs(locals()['args']) # arguments
         self.sel_action()
 
     def return_code(self, beforeSel=False):
-        """ retourne le code des actions
-            toutes les actions si beforeSel==False
-            ou les actions avant l'element selectionné si beforeSel==True"""
+        """ return the code from actions
+            all actions if beforeSel==False
+            or actions before selected action beforeSel==True"""
         if beforeSel:
             sel = self.actionList.selectionModel().selectedIndexes()[0]
             item = self.modActionList.itemFromIndex(sel)
@@ -289,29 +290,30 @@ class ActionTab(QtGui.QWidget):
         return code
 
     def preview(self):
-        ok = PrevDialog(self.parent.imgTab.return_imgs(),
+        """ display a preview of an image after processing """
+        PrevDialog(self.parent.imgTab.return_imgs(),
                                 self.return_code(), self)
 
 
 class SaveTab(QtGui.QWidget):
-    """classe ou est gérée l'enregistrement des images"""
-    def __init__(self, parent=None, dossier=None):
+    """ manage the saving of the images """
+    def __init__(self, parent=None, folder=None):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
         self.title = _("save")
         self.imgs = self.parent.imgTab.return_imgs()
         self.code = self.parent.actionTab.return_code()
 
-        ### dossier d'enregistrement ###
-        self.dossier = dossier
-        self.dossierLabel = QtGui.QLabel(_("new dir"))
-        self.dossierEdit = QtGui.QLineEdit(self)
-        self.dossierEdit.setText(self.dossier)
-        self.dossierEdit.textChanged[str].connect(self.dir_changed)
-        self.dossierChooser = QtGui.QPushButton(_("choose"))
-        self.dossierChooser.clicked.connect(self.change_dir)
+        ### saving folder ###
+        self.folder = folder
+        self.folderLabel = QtGui.QLabel(_("new dir"))
+        self.folderEdit = QtGui.QLineEdit(self)
+        self.folderEdit.setText(self.folder)
+        self.folderEdit.textChanged[str].connect(self.dir_changed)
+        self.folderChooser = QtGui.QPushButton(_("choose"))
+        self.folderChooser.clicked.connect(self.change_dir)
 
-        ### nom de fichier ###
+        ### filename ###
         self.filenameLabel = QtGui.QLabel(_("filenames"))
         self.filenameEdit = QtGui.QLineEdit(self)
         self.filenameEdit.setText("%F%E")
@@ -325,17 +327,17 @@ class SaveTab(QtGui.QWidget):
         self.tab_enter()
         self.parent.save_enter.connect(self.tab_enter)
 
-        ### doc nom de fichier ###
+        ### filename documentation ###
         self.doc = _( """%F : original filename
 %E : original extension
 %I to %IIIIIIIIII : increment (1 to 10 digits)""")
         self.docLabel = QtGui.QLabel(self.doc)
 
-        ### code ###
+        ### code verification###
         self.codeEditButton = QtGui.QPushButton(_("code"))
         self.codeEditButton.clicked.connect(self.edit_code)
 
-        ### appliquer ###
+        ### apply ###
         self.applyW = QtGui.QPushButton(_("apply"))
         self.applyW.clicked.connect(self.apply_clicked)
 
@@ -344,9 +346,9 @@ class SaveTab(QtGui.QWidget):
 
         ### layout ###
         fileGrid = QtGui.QGridLayout()
-        fileGrid.addWidget(self.dossierLabel, 0, 0)
-        fileGrid.addWidget(self.dossierEdit, 0, 1, 1, 3)
-        fileGrid.addWidget(self.dossierChooser, 0, 4)
+        fileGrid.addWidget(self.folderLabel, 0, 0)
+        fileGrid.addWidget(self.folderEdit, 0, 1, 1, 3)
+        fileGrid.addWidget(self.folderChooser, 0, 4)
         fileGrid.addWidget(self.filenameLabel, 2, 0)
         fileGrid.addWidget(self.filenameEdit, 2, 1)
 
@@ -368,7 +370,7 @@ class SaveTab(QtGui.QWidget):
         layout.addLayout(okBox)
 
     def tab_enter (self):
-        """change le nom de fichier en fonction des fichiers ajoutés"""
+        """change filename exemple depending of new images"""
         if len(self.imgs) > 0:
             self.oriFn = os.path.split(self.imgs[0]) [1]
         else:
@@ -377,34 +379,37 @@ class SaveTab(QtGui.QWidget):
         self.filename_changed()
 
     def dir_changed(self):
-        """ modification du dossier d'enregistrement """
-        self.dossier = self.dossierEdit.text()
+        """ modify the saving folder """
+        self.folder = self.folderEdit.text()
 
     def change_dir(self):
-        """ boite de dialogue changement dossier enregistrement """
+        """ dialog to change saving folder """
         url = QtGui.QFileDialog.getExistingDirectory(self,
-                    _("Select the backup folder"), self.dossier)
+                    _("Select the saving folder"), self.folder)
         if url:
-            self.dossierEdit.setText(url)
+            self.folderEdit.setText(url)
+        print(self.folder)
 
     def filename_changed(self):
-        """ change le label du nom de fichier en fonction des modifications """
+        """ change filename label depending of filename edit """
         fn = str(self.filenameEdit.text())
         fn = return_new_filename(self.oriFn, fn)
         self.newFilename.setText(fn)
 
     def edit_code(self):
-        """ ouvre une boite de dialogue pour voir et éditer
-            le code qui sera appliqué aux images """
+        """ open a dialog to see and edit
+            the code that will be applied to images """
         ok, self.code = TextEditDialog(self, self.code).getReturn()
 
     def apply_clicked(self):
+        """ open the dialog that process images"""
         fn = str(self.filenameEdit.text())
-        ApplyDialog(self.dossier, fn, self.code, self.imgs, self)
+        ApplyDialog(self.folder, fn, self.code, self.imgs, self)
 
 
 class MainDialog(QtGui.QDialog):
-    """ fenetre principale de l'application """
+    """ main windows of the application
+        include the 3 class above as tab"""
     img_enter = QtCore.pyqtSignal()
     action_enter = QtCore.pyqtSignal()
     save_enter = QtCore.pyqtSignal()
@@ -429,7 +434,7 @@ class MainDialog(QtGui.QDialog):
         self.show()
 
     def tab_changed(self, tab):
-        """ envoi des données au onglets au moment de leur ouverture """
+        """ send data to tab at opening """
         if tab == 0:
             self.img_enter.emit()
         elif tab == 1:
@@ -442,9 +447,7 @@ class MainDialog(QtGui.QDialog):
 
 
 if __name__ == "__main__":
-    ### import des images ##############################################
-    if len(sys.argv) == 1:
-        sys.argv.append("test/imgs")
+    ### import of the images ##############################################
     if len(sys.argv) > 1:
         if os.path.isdir(sys.argv[1]):
             fichiers = [os.path.join(sys.argv[1], i)
@@ -457,7 +460,7 @@ if __name__ == "__main__":
         fichiers = []
         dossier = ""
 
-    ### import des plugins #############################################
+    ### import of the plugins #############################################
     pluginPath = os.path.join(os.path.dirname(
                            imp.find_module("imagemash")[1]), "plugins/")
     pluginFiles = [fname[:-3] for fname in os.listdir(pluginPath)
@@ -478,7 +481,7 @@ if __name__ == "__main__":
                                      languages=['fr'])
     presLan_fr.install()
 
-    ### demarage de l'interface ########################################
+    ### starting the interface ########################################
     app = QtGui.QApplication(sys.argv)
     app.lastWindowClosed.connect(app.quit)
     win = MainDialog(fichiers, dossier)
