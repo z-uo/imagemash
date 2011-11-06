@@ -35,7 +35,7 @@ class ExecDialog(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
         self.parent = parent
         self.setWindowTitle("flip / rotate")
-        
+
         ### flip ###
         self.flipL = QtGui.QLabel("flip")
         self.flipW = QtGui.QComboBox(self)
@@ -43,7 +43,7 @@ class ExecDialog(QtGui.QDialog):
         self.flipW.addItem("flip horizontally")
         self.flipW.addItem("flip vertically")
         self.flipW.addItem("flip horizontally and vertically")
-        
+
         ### rotate ###
         self.rotateL = QtGui.QLabel("rotate")
         self.rotateW = QtGui.QComboBox(self)
@@ -51,18 +51,18 @@ class ExecDialog(QtGui.QDialog):
         self.rotateW.addItem("rotate by 90°")
         self.rotateW.addItem("rotate by -90°")
         self.rotateW.addItem("rotate 180°")
-        
+
         ### args ###
         if args:
             self.flipW.setCurrentIndex(args[0])
             self.rotateW.setCurrentIndex(args[1])
-        
+
         ### apply, undo ###
         self.okW = QtGui.QPushButton('apply', self)
         self.okW.clicked.connect(self.ok_clicked)
         self.undoW = QtGui.QPushButton('undo', self)
         self.undoW.clicked.connect(self.undo_clicked)
-        
+
         ### layout ###
         grid = QtGui.QGridLayout()
         grid.setSpacing(3)
@@ -70,26 +70,26 @@ class ExecDialog(QtGui.QDialog):
         grid.addWidget(self.flipW, 0, 1)
         grid.addWidget(self.rotateL, 1, 0)
         grid.addWidget(self.rotateW, 1, 1)
-        
+
         okBox = QtGui.QHBoxLayout()
         okBox.addStretch(0)
         okBox.addWidget(self.okW)
         okBox.addWidget(self.undoW)
-        
+
         vBox = QtGui.QVBoxLayout()
         vBox.addLayout(grid)
         vBox.addStretch(0)
         vBox.addLayout(okBox)
-        
+
         self.setLayout(vBox)
         self.exec_()
-        
+
     def ok_clicked(self):
         self.accept()
-        
+
     def undo_clicked(self):
         self.reject()
-        
+
     def get_return(self):
         if self.result():
             if self.flipW.currentIndex() == 0: # horizontal
@@ -104,7 +104,7 @@ class ExecDialog(QtGui.QDialog):
             elif self.flipW.currentIndex() == 3: # horizontal and vertical
                 code = "$i = $i.mirrored(True, True)"
                 desc = "flip horizontally and vertically"
-            
+
             if self.rotateW.currentIndex() == 0:
                 desc = """%s
 no rotation""" %(desc)
@@ -129,15 +129,13 @@ transform.rotate(180)
 $i = $i.transformed(transform, QtCore.Qt.SmoothTransformation)""" %(code,)
                 desc = """%s
 rotate by 180°""" %(desc)
-            
+
             args = (self.flipW.currentIndex(), self.rotateW.currentIndex())
             return True , code, desc, args
         else:
             return False, None, None, None
-        
+
 if __name__=="__main__":
-    import sys, os
+    import sys
     app = QtGui.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
     win = ExecDialog()
-    app.exec_()

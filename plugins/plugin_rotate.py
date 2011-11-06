@@ -48,10 +48,11 @@ class ExecDialog(QtGui.QDialog):
         ### image ###
         self.imW = QtGui.QComboBox(self)
         self.images = []
-        for i, v in enumerate(images):
-            f = os.path.split(v)[1]
-            self.imW.addItem(f)
-            self.images.append(v)
+        if images:
+            for i, v in enumerate(images):
+                f = os.path.split(v)[1]
+                self.imW.addItem(f)
+                self.images.append(v)
 
         ### zoom buttons ###
         self.zoomInW = QtGui.QToolButton()
@@ -117,7 +118,8 @@ class ExecDialog(QtGui.QDialog):
         self.undoW = QtGui.QPushButton('undo', self)
 
         ### function ###################################################
-        self.im_changed(self.images[0])
+        if images:
+            self.im_changed(self.images[0])
 
         ### connexion ##################################################
         self.imW.activated[str].connect(self.im_changed)
@@ -164,15 +166,11 @@ class ExecDialog(QtGui.QDialog):
 
         grid = QtGui.QGridLayout()
         grid.setSpacing(2)
-
         grid.addWidget(self.imW, 0, 0)
         grid.addLayout(toolBox, 1, 0, 1, 2)
-
         grid.addWidget(self.actionW, 0, 1)
-
         grid.addWidget(self.degreL, 0, 2)
         grid.addWidget(self.degreW, 0, 3)
-
         grid.addWidget(self.apercuW, 1, 3)
         grid.addWidget(self.resetW, 1, 2)
 
@@ -327,4 +325,3 @@ if __name__=="__main__":
     image = "../test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
     win = ExecDialog([image])
-    app.exec_()

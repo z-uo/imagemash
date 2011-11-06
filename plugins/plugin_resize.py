@@ -38,7 +38,7 @@ class ExecDialog(QtGui.QDialog):
         self.parent = parent
         self.setWindowTitle("resize")
         self.codeBefore = code
-        
+
         ### liste des images ###
         self.im = QtGui.QImage()
         self.imW = QtGui.QComboBox(self)
@@ -47,7 +47,7 @@ class ExecDialog(QtGui.QDialog):
             f = os.path.split(v)[1]
             self.imW.addItem(f)
             self.images.append(v)
-        
+
         ### ratio ###
         self.ratioIndex = ["keep aspect ratio",
                            "keep aspect ratio by extending",
@@ -57,30 +57,30 @@ class ExecDialog(QtGui.QDialog):
         self.ratioW = QtGui.QComboBox(self)
         for i in self.ratioIndex:
             self.ratioW.addItem(i)
-        
+
         ### width ###
         self.wL = QtGui.QLabel("width")
         self.wW = QtGui.QLineEdit(self)
         self.wW.setValidator(QtGui.QIntValidator(self.wW))
-        
+
         ### height ###
         self.hL = QtGui.QLabel("height")
         self.hW = QtGui.QLineEdit(self)
         self.hW.setValidator(QtGui.QIntValidator(self.hW))
-        
+
         ### info labels ###
         self.oriL = QtGui.QLabel("original size")
         self.oriWL = QtGui.QLabel("")
         self.oriHL = QtGui.QLabel("")
-        
+
         self.newL = QtGui.QLabel("new size")
         self.newWL = QtGui.QLabel("")
         self.newHL = QtGui.QLabel("")
-        
+
         ### apply, undo ###
         self.okW = QtGui.QPushButton('apply', self)
         self.undoW = QtGui.QPushButton('undo', self)
-        
+
         ### initialise le ratio et l'image courante ###
         self.im_changed(False)
         if args:
@@ -91,7 +91,7 @@ class ExecDialog(QtGui.QDialog):
             self.wW.setText(str(self.im.width()))
             self.hW.setText(str(self.im.height()))
         self.ratio_changed()
-        
+
         ### connecte tout le bordel ###
         self.imW.activated.connect(self.im_changed)
         self.ratioW.activated.connect(self.ratio_changed)
@@ -99,7 +99,7 @@ class ExecDialog(QtGui.QDialog):
         self.hW.textChanged.connect(self.maj)
         self.okW.clicked.connect(self.ok_clicked)
         self.undoW.clicked.connect(self.undo_clicked)
-        
+
         grid = QtGui.QGridLayout()
         grid.setSpacing(3)
         grid.setColumnMinimumWidth(0, 50)
@@ -109,34 +109,34 @@ class ExecDialog(QtGui.QDialog):
 
         grid.addWidget(self.imW, 0, 1)
         grid.addWidget(self.ratioW, 1, 1, 1, 3)
-        
+
         grid.addWidget(self.wL, 3, 0)
         grid.addWidget(self.hL, 4, 0)
-        
+
         grid.addWidget(self.wW, 3, 1)
         grid.addWidget(self.hW, 4, 1)
-        
+
         grid.addWidget(self.oriL, 2, 2)
         grid.addWidget(self.oriWL, 3, 2)
         grid.addWidget(self.oriHL, 4, 2)
-        
+
         grid.addWidget(self.newL, 2, 3)
         grid.addWidget(self.newWL, 3, 3)
         grid.addWidget(self.newHL, 4, 3)
-        
+
         okBox = QtGui.QHBoxLayout()
         okBox.addStretch(0)
         okBox.addWidget(self.okW)
         okBox.addWidget(self.undoW)
-        
+
         vBox = QtGui.QVBoxLayout()
         vBox.addLayout(grid)
         vBox.addStretch(0)
         vBox.addLayout(okBox)
-        
+
         self.setLayout(vBox)
         self.exec_()
-        
+
     def im_changed(self, maj=True):
         if self.images:
             self.im.load(self.images[self.imW.currentIndex()])
@@ -146,7 +146,7 @@ class ExecDialog(QtGui.QDialog):
             self.oriHL.setText("%s"%(self.im.height(),))
             if maj:
                 self.maj()
-        
+
     def ratio_changed(self):
         ratio = str(self.ratioW.currentText())
         if ratio == "fit to width":
@@ -159,7 +159,7 @@ class ExecDialog(QtGui.QDialog):
             self.hW.setDisabled(False)
             self.wW.setDisabled(False)
         self.maj()
-            
+
     def maj(self):
         w = int(self.wW.text()) or 0
         h = int(self.hW.text()) or 0
@@ -168,15 +168,15 @@ class ExecDialog(QtGui.QDialog):
             oriH = int(self.im.height())
             ratio = str(self.ratioW.currentText())
             if ratio == "keep aspect ratio" and w > 0 and h > 0:
-                oriRatio = oriW / oriH 
+                oriRatio = oriW / oriH
                 newRatio = w / h
                 if oriRatio >= newRatio:
                     h = int((oriH * w) / oriW)
                 elif oriRatio < newRatio:
                     w = int((oriW * h) / oriH)
-                    
+
             elif ratio == "keep aspect ratio by extending" and w > 0 and h > 0:
-                oriRatio = oriW / oriH 
+                oriRatio = oriW / oriH
                 newRatio = w / h
                 if oriRatio <= newRatio:
                     h = int((oriH * w) / oriW)
@@ -193,20 +193,20 @@ class ExecDialog(QtGui.QDialog):
                 h = oriH
         self.newWL.setText(str(w))
         self.newHL.setText(str(h))
-    
+
     def ok_clicked(self):
         self.accept()
-        
+
     def undo_clicked(self):
         self.reject()
-        
+
     def get_return(self):
         if self.result():
             w = int(self.wW.text())
             h = int(self.hW.text())
             ratio = str(self.ratioW.currentText())
             transform = "QtCore.Qt.SmoothTransformation"
-            
+
             if ratio == "keep aspect ratio" and w > 0 and h > 0:
                 code = "$i = $i.scaled(%s, %s, QtCore.Qt.KeepAspectRatio, %s)" %(w, h, transform)
                 desc = """keep aspect ratio
@@ -237,10 +237,8 @@ h = %spx""" %(h,)
             return True , code, desc, args
         else:
             return False, None, None, None
-        
+
 if __name__=="__main__":
     image = "media/donees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
     win = ExecDialog()
-    app.exec_()

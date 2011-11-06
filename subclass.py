@@ -132,7 +132,7 @@ class ApplyDialog(QtGui.QDialog):
     """ dialog with info and a progress bar
         used while applying the code on images"""
     def __init__(self, rep, fn, code, images, parent=None):
-        super(ApplyDialog, self).__init__(parent)
+        QtGui.QDialog.__init__(self, parent)
         self.parent = parent
         self.setWindowTitle(_("apply code"))
         self.quit = False
@@ -213,7 +213,7 @@ class Apply(QtCore.QThread):
     infoBatch = QtCore.pyqtSignal(tuple)
     endBatch = QtCore.pyqtSignal(bool)
     def __init__(self, rep, fn, code, images, parent=None):
-        super(Apply, self).__init__(parent)
+        QtCore.QThread.__init__(self, parent)
         self.rep = rep
         self.fn = fn
         self.code = code.replace("$i", "self.im")

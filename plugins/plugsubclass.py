@@ -23,7 +23,8 @@ from PyQt4 import QtCore
 
 
 class Viewer(QtGui.QScrollArea):
-    """ Class doc """
+    """ QScrollArea containnig the image (class painting)
+        capture somme signal for zooming (wheel) and moving (midbutton) in image"""
     zoomOut = QtCore.pyqtSignal()
     zoomIn = QtCore.pyqtSignal()
 
@@ -40,22 +41,18 @@ class Viewer(QtGui.QScrollArea):
         elif event.delta() < 0:
             self.zoomOut.emit()
 
-    # bof
-    def zoom(self, n):
-        #~ self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() * n)
-        #~ self.verticalScrollBar().setValue(self.verticalScrollBar().value() * n)
-        pass
-
     def event(self, event):
         """ capture middle mouse event to move the view """
         # clic millieu: on memorise l'endroit pour le drag
-        if (event.type()==QtCore.QEvent.MouseButtonPress) and (event.button()==QtCore.Qt.MidButton):
+        if (event.type() == QtCore.QEvent.MouseButtonPress and
+                       event.button()==QtCore.Qt.MidButton):
             self.mouseX = event.x()
             self.mouseY = event.y()
             return True
 
         # drag millieu: on se deplace dans l'image
-        elif (event.type()==QtCore.QEvent.MouseMove) and (event.buttons()==QtCore.Qt.MidButton):
+        elif (event.type() == QtCore.QEvent.MouseMove and
+               event.buttons() == QtCore.Qt.MidButton):
             diffX = event.x() - self.mouseX
             self.mouseX = event.x()
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - diffX)

@@ -392,6 +392,4 @@ class EditDialog(QtGui.QDialog):
 if __name__=="__main__":
     image = "/media/donnees/programation/imagemash/test/imgs/IMGP0333.JPG"
     app = QtGui.QApplication(sys.argv)
-    app.lastWindowClosed.connect(app.quit)
     win = ExecDialog([image])
-    app.exec_()
